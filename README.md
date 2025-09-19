@@ -77,7 +77,7 @@ graph TD
 
 * **Frontend**: React.
 * **Backend**: Spring.
-* **DB**: Postgres.
+* **DB**: Postgres/MongoDB.
 * **Очередь**: Kafka.
 * **CI/Deployment**: Docker Compose.
 
