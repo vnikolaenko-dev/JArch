@@ -61,13 +61,12 @@ graph TD
   UI[React Frontend]
   API[Project Service]
   Auth[Auth Service]
-  Kafka[Apache Kafka]
 
   UI --> APIGateway
   APIGateway --> Auth
-  APIGateway --> Kafka
-  Kafka --> API
-  API --> ArtifactStorage
+  APIGateway --> RabbitMQ
+  RabbitMQ --> API
+  API --> MiniIO
   Auth --> UserStorage
 ```
 
