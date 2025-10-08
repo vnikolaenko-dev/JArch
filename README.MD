@@ -1,7 +1,3 @@
-Here’s the English translation of your README, preserving structure, formatting, and technical accuracy:
-
----
-
 # 🏗️ JArch — Java Architecture Generator
 
 **JArch** is a service that automatically generates ready-to-run Java projects (monoliths or microservices) based on a predefined architecture.
