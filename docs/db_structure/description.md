@@ -2,7 +2,7 @@
 ![ER диаграмма](https://raw.githubusercontent.com/arseeenyyy/JArch/main/docs/db_structure/ER.svg)
 
 ## 2. Даталогическая модель
-![Даталогическая модель](https://raw.githubusercontent.com/arseeenyyy/JArch/main/docs/db_structure/data.drawio.svg)
+![Даталогическая модель](https://raw.githubusercontent.com/arseeenyyy/JArch/main/docs/db_structure/data.svg)
 
 ## 3. Реализация даталогической модели в субд Postgresql
 ``` sql
