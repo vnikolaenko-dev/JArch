@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>JArch - Генератор Spring Boot проектов</title>
+    <style>
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent: #64b5f6;
+            --success: #66bb6a;
+            --warning: #ffca28;
+            --error: #ef5350;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+
+        h1 {
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            border-radius: 8px 8px 0 0;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            background: var(--bg-tertiary);
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        input, select, textarea, button {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid #444;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #42a5f5;
+        }
+
+        button.secondary {
+            background: var(--bg-tertiary);
+        }
+
+        button.secondary:hover {
+            background: #3d3d3d;
+        }
+
+        .log-container {
+            border: 1px solid #444;
+            background-color: var(--bg-primary);
+            height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+
+        .log-info { color: var(--accent); }
+        .log-warn { color: var(--warning); }
+        .log-error { color: var(--error); }
+        .log-success { color: var(--success); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+
+        .team-member {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 10px;
+            background: var(--bg-secondary);
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+
+        .save-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-secondary);
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .save-item:hover {
+            background: #3d3d3d;
+        }
+
+        .project-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .project-item {
+            padding: 15px;
+            background: var(--bg-tertiary);
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-active { background: var(--success); color: white; }
+        .status-draft { background: var(--warning); color: black; }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>🚀 JArch Generator</h1>
+        <p class="subtitle">Генератор Spring Boot проектов с управлением командами и сохранениями</p>
+    </header>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('generation')">Генерация проекта</button>
+        <button class="tab" onclick="switchTab('projects')">Мои проекты</button>
+        <button class="tab" onclick="switchTab('team')">Управление командой</button>
+        <button class="tab" onclick="switchTab('saves')">Сохранения</button>
+        <button class="tab" onclick="switchTab('downloads')">Загрузки</button>
+    </div>
+
+    <!-- Вкладка генерации проекта -->
+    <div id="generation" class="tab-content active">
+        <h2>🛠️ Генерация нового проекта</h2>
+        <form id="uploadForm">
+            <div class="form-group">
+                <label>JWT токен:</label>
+                <input type="text" id="jwtToken" placeholder="Введите JWT токен" required>
+            </div>
+
+            <div class="grid">
+                <div class="form-group">
+                    <label>Конфигурация сущностей (JSON):</label>
+                    <input type="file" name="entityConfig" accept=".json" required>
+                </div>
+                <div class="form-group">
+                    <label>Конфигурация приложения (JSON):</label>
+                    <input type="file" name="appConfig" accept=".json" required>
+                </div>
+            </div>
+
+            <button type="submit">🚀 Сгенерировать проект</button>
+        </form>
+
+        <h3 style="margin-top: 30px;">Логи генерации:</h3>
+        <div id="logContainer" class="log-container"></div>
+    </div>
+
+    <!-- Вкладка управления проектами -->
+    <div id="projects" class="tab-content">
+        <h2>📂 Мои проекты</h2>
+
+        <div class="grid">
+            <div class="card">
+                <h3>🆕 Создать проект</h3>
+                <form id="createProjectForm">
+                    <div class="form-group">
+                        <label>Название проекта:</label>
+                        <input type="text" id="projectName" placeholder="Введите название проекта" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Описание:</label>
+                        <textarea id="projectDescription" placeholder="Описание проекта" rows="3"></textarea>
+                    </div>
+                    <button type="submit">Создать проект</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>📋 Список проектов</h3>
+                <div id="projectsList" class="project-list">
+                    <!-- Проекты будут загружаться здесь -->
+                </div>
+                <button onclick="loadUserProjects()" class="secondary" style="margin-top: 10px;">🔄 Обновить список</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка управления командой -->
+    <div id="team" class="tab-content">
+        <h2>👥 Управление командой</h2>
+
+        <div class="grid">
+            <div class="card">
+                <h3>➕ Добавить участника</h3>
+                <form id="addMemberForm">
+                    <div class="form-group">
+                        <label>Проект:</label>
+                        <select id="teamProjectSelect" required>
+                            <option value="">Выберите проект</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Имя пользователя:</label>
+                        <input type="text" id="memberUsername" placeholder="Введите username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Роль:</label>
+                        <select id="memberRole" required>
+                            <option value="DEVELOPER">Разработчик</option>
+                            <option value="TESTER">Тестировщик</option>
+                            <option value="DESIGNER">Дизайнер</option>
+                            <option value="PRODUCT_OWNER">Product Owner</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Уровень доступа:</label>
+                        <select id="memberAccessLevel" required>
+                            <option value="VIEWER">Просмотр</option>
+                            <option value="EDITOR">Редактирование</option>
+                            <option value="ADMIN">Администратор</option>
+                        </select>
+                    </div>
+                    <button type="submit">Добавить в команду</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>👥 Участники команды</h3>
+                <div class="form-group">
+                    <label>Выберите проект:</label>
+                    <select id="viewTeamProject" onchange="loadTeamMembers()">
+                        <option value="">Выберите проект</option>
+                    </select>
+                </div>
+                <div id="teamMembersList">
+                    <!-- Список участников будет здесь -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка сохранений -->
+    <div id="saves" class="tab-content">
+        <h2>💾 Управление сохранениями</h2>
+
+        <div class="grid">
+            <div class="card">
+                <h3>💾 Создать сохранение</h3>
+                <form id="createSaveForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>Название сохранения:</label>
+                        <input type="text" id="saveName" placeholder="Уникальное название" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Конфигурация сущностей:</label>
+                        <input type="file" name="entityConfig" accept=".json" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Конфигурация приложения:</label>
+                        <input type="file" name="appConfig" accept=".json" required>
+                    </div>
+                    <button type="submit">💾 Сохранить конфигурацию</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>📂 Мои сохранения</h3>
+                <div id="savesList">
+                    <!-- Список сохранений будет здесь -->
+                </div>
+                <button onclick="loadSaves()" class="secondary" style="margin-top: 10px;">🔄 Обновить список</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка загрузок -->
+    <div id="downloads" class="tab-content">
+        <h2>📥 Загрузки</h2>
+
+        <div class="grid">
+            <div class="card">
+                <h3>⚙️ Загрузить конфигурации</h3>
+                <div class="form-group">
+                    <label>Название сохранения:</label>
+                    <input type="text" id="downloadSaveName" placeholder="Введите название сохранения">
+                </div>
+                <button onclick="downloadConfig()">📥 Загрузить конфиг приложения</button>
+                <button onclick="downloadEntity()" class="secondary" style="margin-top: 10px;">📥 Загрузить конфиг сущностей</button>
+            </div>
+
+            <div class="card">
+                <h3>📊 История загрузок</h3>
+                <div id="downloadHistory">
+                    <!-- История загрузок будет здесь -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentToken = '';
+    let userProjects = [];
+
+    // Переключение вкладок
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+
+        // Загружаем данные при переключении на вкладку
+        if (tabName === 'projects') {
+            loadUserProjects();
+        } else if (tabName === 'saves') {
+            loadSaves();
+        } else if (tabName === 'team') {
+            loadProjectsForTeam();
+        }
+    }
+
+    // Генерация проекта
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append('entityConfig', document.querySelector('input[name="entityConfig"]').files[0]);
+        formData.append('appConfig', document.querySelector('input[name="appConfig"]').files[0]);
+
+        currentToken = document.getElementById('jwtToken').value.trim();
+        if (!currentToken) {
+            alert("Введите JWT токен!");
+            return;
+        }
+
+        try {
+            const res = await fetch("/jarch/generate-project", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${currentToken}`
+                },
+                body: formData
+            });
+
+            if (!res.ok) {
+                throw new Error(`Ошибка запроса: ${res.status} ${res.statusText}`);
+            }
+
+            const { id } = await res.json();
+            startStream(id, currentToken);
+        } catch (error) {
+            addLog("ERROR", error.message);
+        }
+    });
+
+    // SSE стрим для генерации
+    function startStream(id, jwtToken) {
+        const eventSource = new EventSource(`/jarch/generate-project/stream/${id}?token=${encodeURIComponent(jwtToken)}`);
+
+        eventSource.addEventListener("log", event => {
+            const data = JSON.parse(event.data);
+            addLog(data.level, data.message);
+        });
+
+        eventSource.addEventListener("zipReady", () => {
+            addLog("SUCCESS", "ZIP файл готов. Начинаю скачивание...");
+            downloadZip(id, jwtToken);
+            eventSource.close();
+        });
+
+        eventSource.onerror = function() {
+            addLog("ERROR", "Ошибка соединения");
+            eventSource.close();
+        };
+    }
+
+    // Загрузка ZIP
+    function downloadZip(id, token) {
+        fetch(`/jarch/generate-project/download/${id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        }).then(resp => {
+            if (!resp.ok) throw new Error('Ошибка загрузки');
+            return resp.blob();
+        }).then(blob => {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `generated-project-${id}.zip`;
+            a.click();
+            addLog("SUCCESS", "Проект успешно скачан!");
+        }).catch(error => {
+            addLog("ERROR", `Ошибка скачивания: ${error.message}`);
+        });
+    }
+
+    // Создание проекта
+    document.getElementById('createProjectForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const projectName = document.getElementById('projectName').value;
+        const description = document.getElementById('projectDescription').value;
+
+        try {
+            const response = await fetch('/project/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({
+                    name: projectName,
+                    description: description,
+                    owner: 'current-user' // Будет установлен на сервере
+                })
+            });
+
+            if (response.ok) {
+                alert('Проект успешно создан!');
+                loadUserProjects();
+                document.getElementById('createProjectForm').reset();
+            } else {
+                throw new Error('Ошибка создания проекта');
+            }
+        } catch (error) {
+            alert('Ошибка: ' + error.message);
+        }
+    });
+
+    // Загрузка проектов пользователя
+    async function loadUserProjects() {
+        try {
+            const response = await fetch('/project/all', {
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+
+            if (response.ok) {
+                userProjects = await response.json();
+                displayProjects(userProjects);
+                updateProjectSelects();
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки проектов:', error);
+        }
+    }
+
+    // Отображение проектов
+    function displayProjects(projects) {
+        const container = document.getElementById('projectsList');
+        container.innerHTML = projects.map(project => `
+                <div class="project-item">
+                    <h4>${project.name}</h4>
+                    <p>${project.description || 'Без описания'}</p>
+                    <span class="status-badge status-active">Активен</span>
+                    <div style="margin-top: 10px;">
+                        <button onclick="viewProject(${project.id})" class="secondary">Просмотр</button>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    // Обновление select'ов с проектами
+    function updateProjectSelects() {
+        const selects = ['teamProjectSelect', 'viewTeamProject'];
+        selects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Выберите проект</option>' +
+                userProjects.map(project =>
+                    `<option value="${project.id}">${project.name}</option>`
+                ).join('');
+        });
+    }
+
+    // Загрузка проектов для вкладки команды
+    function loadProjectsForTeam() {
+        if (userProjects.length === 0) {
+            loadUserProjects();
+        }
+    }
+
+    // Добавление участника команды
+    document.getElementById('addMemberForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const projectId = document.getElementById('teamProjectSelect').value;
+        const username = document.getElementById('memberUsername').value;
+        const role = document.getElementById('memberRole').value;
+        const accessLevel = document.getElementById('memberAccessLevel').value;
+
+        try {
+            const response = await fetch('/team?projectId=' + projectId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({
+                    project: { id: projectId },
+                    username: username,
+                    role: role,
+                    accessLevel: accessLevel
+                })
+            });
+
+            if (response.ok) {
+                alert('Участник успешно добавлен!');
+                loadTeamMembers();
+                document.getElementById('addMemberForm').reset();
+            } else {
+                throw new Error('Ошибка добавления участника');
+            }
+        } catch (error) {
+            alert('Ошибка: ' + error.message);
+        }
+    });
+
+    // Загрузка участников команды
+    async function loadTeamMembers() {
+        const projectId = document.getElementById('viewTeamProject').value;
+        if (!projectId) return;
+
+        try {
+            const response = await fetch(`/team?projectId=${projectId}`, {
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+
+            if (response.ok) {
+                const members = await response.json();
+                displayTeamMembers(members);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки участников:', error);
+        }
+    }
+
+    // Отображение участников команды
+    function displayTeamMembers(members) {
+        const container = document.getElementById('teamMembersList');
+        container.innerHTML = members.map(member => `
+                <div class="team-member">
+                    <div>
+                        <strong>${member.username}</strong>
+                        <br>
+                        <small>Роль: ${member.role} • Доступ: ${member.accessLevel}</small>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    // Создание сохранения
+    document.getElementById('createSaveForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append('saveName', document.getElementById('saveName').value);
+        formData.append('entityConfig', document.querySelector('#createSaveForm input[name="entityConfig"]').files[0]);
+        formData.append('appConfig', document.querySelector('#createSaveForm input[name="appConfig"]').files[0]);
+
+        try {
+            const response = await fetch('/jarch/make-save', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                alert('Сохранение успешно создано!');
+                loadSaves();
+                document.getElementById('createSaveForm').reset();
+            } else {
+                throw new Error('Ошибка создания сохранения');
+            }
+        } catch (error) {
+            alert('Ошибка: ' + error.message);
+        }
+    });
+
+    // Загрузка списка сохранений
+    async function loadSaves() {
+        try {
+            const response = await fetch('/jarch/get-saves', {
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+
+            if (response.ok) {
+                const saves = await response.json();
+                displaySaves(saves);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки сохранений:', error);
+        }
+    }
+
+    // Отображение сохранений
+    function displaySaves(saves) {
+        const container = document.getElementById('savesList');
+        container.innerHTML = saves.map(save => `
+                <div class="save-item" onclick="selectSave('${save}')">
+                    <span>${save}</span>
+                    <button onclick="event.stopPropagation(); deleteSave('${save}')" class="secondary">🗑️</button>
+                </div>
+            `).join('');
+    }
+
+    // Загрузка конфигурации
+    async function downloadConfig() {
+        const saveName = document.getElementById('downloadSaveName').value;
+        if (!saveName) {
+            alert('Введите название сохранения');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/jarch/download-config-file/${saveName}`, {
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+
+            if (response.ok) {
+                const config = await response.json();
+                downloadAsFile(config, `${saveName}_config.json`, 'application/json');
+                addDownloadHistory(`Конфиг приложения: ${saveName}`);
+            } else {
+                throw new Error('Конфигурация не найдена');
+            }
+        } catch (error) {
+            alert('Ошибка: ' + error.message);
+        }
+    }
+
+    // Загрузка конфигурации сущностей
+    async function downloadEntity() {
+        const saveName = document.getElementById('downloadSaveName').value;
+        if (!saveName) {
+            alert('Введите название сохранения');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/jarch/download-entity-file/${saveName}`, {
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+
+            if (response.ok) {
+                const config = await response.json();
+                downloadAsFile(config, `${saveName}_entity.json`, 'application/json');
+                addDownloadHistory(`Конфиг сущностей: ${saveName}`);
+            } else {
+                throw new Error('Конфигурация сущностей не найдена');
+            }
+        } catch (error) {
+            alert('Ошибка: ' + error.message);
+        }
+    }
+
+    // Вспомогательная функция для скачивания как файл
+    function downloadAsFile(content, filename, contentType) {
+        const blob = new Blob([JSON.stringify(content, null, 2)], { type: contentType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // Добавление в историю загрузок
+    function addDownloadHistory(item) {
+        const history = document.getElementById('downloadHistory');
+        const entry = document.createElement('div');
+        entry.className = 'save-item';
+        entry.textContent = `${new Date().toLocaleString()} - ${item}`;
+        history.insertBefore(entry, history.firstChild);
+    }
+
+    // Логирование
+    function addLog(level, message) {
+        const logContainer = document.getElementById('logContainer');
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-${level.toLowerCase()}`;
+        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logContainer.appendChild(logEntry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', function() {
+        // Загружаем проекты при загрузке страницы
+        loadUserProjects();
+    });
+</script>
+</body>
+</html>
