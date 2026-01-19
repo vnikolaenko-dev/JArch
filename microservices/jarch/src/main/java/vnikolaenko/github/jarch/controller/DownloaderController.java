@@ -2,7 +2,6 @@ package vnikolaenko.github.jarch.controller;
 
 import org.springframework.web.bind.annotation.*;
 import vnikolaenko.github.jarch.service.MinioService;
-import vnikolaenko.github.jarch.utils.SecurityUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
