@@ -43,7 +43,7 @@ const AuthPage = () => {
                 throw new Error('Не удалось получить токен');
             }
         } catch {
-            setError("Такого пользователя не существует");
+            setError("Неверные данные");
         } finally {
             setLoading(false);
         }
@@ -55,12 +55,6 @@ const AuthPage = () => {
                 <h2 className="auth-title">
                     {isLogin ? '[вход]' : '[регистрация]'}
                 </h2>
-                
-                {error && (
-                    <div className="auth-error">
-                        {error}
-                    </div>
-                )}
                 
                 <form onSubmit={handleSubmit} className="auth-form">
                     {!isLogin && (
@@ -103,6 +97,16 @@ const AuthPage = () => {
                             disabled={loading}
                         />
                     </div>
+                    
+                    {error && (
+                        <div style={{
+                            color: 'var(--color-error)',
+                            fontSize: '0.7rem',
+                            textAlign: 'left',
+                        }}>
+                            {error}
+                        </div>
+                    )}
                     
                     <button 
                         type="submit" 

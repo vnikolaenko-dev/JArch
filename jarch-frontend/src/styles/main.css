@@ -180,7 +180,8 @@ button:disabled {
     width: 100%;
     max-width: 400px;
     padding: 30px 20px;
-    margin: 50px auto;
+    margin: 0 auto;
+    margin-bottom: 300px;
     background-color: var(--color-bg-card);
     border: 2px solid var(--color-border);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
@@ -648,4 +649,3 @@ input[type="file"]::file-selector-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
-
