@@ -8,10 +8,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import vnikolaenko.github.jarch.generator.config.ApplicationConfig;
 import vnikolaenko.github.jarch.generator.CodeGenerationOrchestrator;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import vnikolaenko.github.jarch.model.FileType;
+import vnikolaenko.github.jarch.service.ProjectFileService;
+import vnikolaenko.github.jarch.service.SavingService;
+import vnikolaenko.github.jarch.service.ProjectAccessService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,51 +32,44 @@ import java.util.zip.ZipOutputStream;
 @AllArgsConstructor
 public class GeneratorController {
 
-    private final Map<String, TempFiles> fileStore = new ConcurrentHashMap<>();
+    private final Map<String, GenerationData> generationStore = new ConcurrentHashMap<>();
     private final Map<String, byte[]> zipStore = new ConcurrentHashMap<>();
 
     private final CodeGenerationOrchestrator orchestrator;
     private final MinioService minioService;
-
+    private final ProjectFileService projectFileService;
+    private final SavingService savingService;
+    private final ProjectAccessService projectAccessService;
 
     /**
-     * 1) Загружаем файлы — POST
-     * Возвращаем уникальный ID
+     * Генерация проекта из сохранения
      */
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Map<String, String>> uploadFiles(
-            @RequestParam("entityConfig") MultipartFile entityConfigFile,
-            @RequestParam("appConfig") MultipartFile appConfigFile) throws IOException {
-
-        if (entityConfigFile.isEmpty() || appConfigFile.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Оба файла обязательны"));
-        }
-
-        // Генерируем ID запроса
-        String id = UUID.randomUUID().toString();
-
-        // Создаём временные файлы
-        Path entityTemp = Files.createTempFile("entity-" + id, ".json");
-        Path appTemp = Files.createTempFile("app-" + id, ".json");
-
-        entityConfigFile.transferTo(entityTemp);
-        appConfigFile.transferTo(appTemp);
-
-        fileStore.put(id, new TempFiles(entityTemp, appTemp));
-
-        return ResponseEntity.ok(Map.of("id", id));
+    @PostMapping("/from-saving/{savingId}")
+    public ResponseEntity<Map<String, String>> generateFromSaving(@PathVariable Long savingId) throws Exception {
+        var saving = savingService.getSavingById(savingId)
+                .orElseThrow(() -> new RuntimeException("Saving not found"));
+        projectAccessService.validateProjectAccess(saving.getProject().getId());
+        
+        String generationId = UUID.randomUUID().toString();
+        
+        byte[] entityConfig = projectFileService.getFileContent(savingId, FileType.ENTITY_CONFIG);
+        byte[] appConfig = projectFileService.getFileContent(savingId, FileType.APP_CONFIG);
+        
+        GenerationData data = new GenerationData(savingId, entityConfig, appConfig);
+        generationStore.put(generationId, data);
+        
+        return ResponseEntity.ok(Map.of("id", generationId));
     }
 
-
     /**
-     * 2) SSE подключение — GET /stream/{id}
+     * SSE подключение для отслеживания генерации
      */
     @GetMapping("/stream/{id}")
-    public SseEmitter stream(@PathVariable String id) throws Exception {
+    public SseEmitter stream(@PathVariable String id) {
         SseEmitter emitter = new SseEmitter();
 
-        TempFiles files = fileStore.get(id);
-        if (files == null) {
+        GenerationData data = generationStore.get(id);
+        if (data == null) {
             try {
                 emitter.send(SseEmitter.event().name("error").data("Файлы не найдены"));
             } catch (IOException ignored) {
@@ -88,34 +84,35 @@ public class GeneratorController {
             try {
                 logCollector.info("🚀 Начало генерации проекта...");
 
-                // Загружаем конфигурацию
+                Path entityTemp = Files.createTempFile("entity-" + id, ".json");
+                Path appTemp = Files.createTempFile("app-" + id, ".json");
+                
+                Files.write(entityTemp, data.getEntityConfig());
+                Files.write(appTemp, data.getAppConfig());
+
                 ApplicationConfig config = ApplicationConfig.fromArgs(new String[]{
-                        files.appConfig().toString(),
-                        files.entityConfig().toString()
+                        appTemp.toString(),
+                        entityTemp.toString()
                 });
 
                 logCollector.info("📋 Конфигурация загружена");
 
-                // Временная директория для генерации
                 Path tempProjectDir = Files.createDirectory(Path.of("project-" + id));
 
                 orchestrator.generateCompleteProject(config, tempProjectDir);
 
                 logCollector.info("📦 Упаковка в ZIP...");
 
-                // Создаём ZIP
                 byte[] zipBytes = createZip(tempProjectDir);
                 zipStore.put(id, zipBytes);
-
 
                 logCollector.getEmitter().send(SseEmitter.event().name("zipReady").data("ready"));
                 logCollector.info("✅ Генерация завершена");
 
-                String savedFilename1 = minioService.uploadFile(files.appConfig, id + "_app-config.json");
-                String savedFilename2 = minioService.uploadFile(files.entityConfig, id + "_user-config.json");
-
-                System.out.println("Очистка " + tempProjectDir.toAbsolutePath());
+                Files.deleteIfExists(entityTemp);
+                Files.deleteIfExists(appTemp);
                 FileUtils.deleteDirectory(tempProjectDir.toFile());
+                
             } catch (Exception e) {
                 try {
                     logCollector.error("❌ Ошибка: " + e.getMessage());
@@ -123,12 +120,12 @@ public class GeneratorController {
                 }
             } finally {
                 logCollector.getEmitter().complete();
+                generationStore.remove(id);
             }
         });
 
         return logCollector.getEmitter();
     }
-
 
     @GetMapping("/download/{id}")
     public ResponseEntity<byte[]> download(@PathVariable String id) {
@@ -145,8 +142,7 @@ public class GeneratorController {
                 .body(zip);
     }
 
-
-    public byte[] createZip(Path dir) throws IOException {
+    private byte[] createZip(Path dir) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
@@ -164,7 +160,21 @@ public class GeneratorController {
         }
         return baos.toByteArray();
     }
-
-    private record TempFiles(Path entityConfig, Path appConfig) {
+    private static class GenerationData {
+        private final Long savingId;
+        private final byte[] entityConfig;
+        private final byte[] appConfig;
+        
+        public GenerationData(Long savingId, byte[] entityConfig, byte[] appConfig) {
+            this.savingId = savingId;
+            this.entityConfig = entityConfig;
+            this.appConfig = appConfig;
+        }
+        public byte[] getEntityConfig() {
+            return entityConfig;
+        }
+        public byte[] getAppConfig() {
+            return appConfig;
+        }
     }
 }

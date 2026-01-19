@@ -1,0 +1,4 @@
+jarch/src/main/resources/application.properties
+user_service/src/main/resources/application.properties
+api_gateway/src/main/resources/application.properties
+notification_app/src/main/resources/application.properties
