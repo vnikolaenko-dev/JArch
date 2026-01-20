@@ -12,7 +12,6 @@ const GenerationPage = () => {
     const [projectSaves, setProjectSaves] = useState([]);
     const [loadingProjects, setLoadingProjects] = useState(false);
     const [selectedSave, setSelectedSave] = useState(null);
-    const [error, setError] = useState('');
     const eventSourceRef = useRef(null);
 
     useEffect(() => {
@@ -34,13 +33,10 @@ const GenerationPage = () => {
 
     const loadProjects = async () => {
         setLoadingProjects(true);
-        setError('');
         try {
             const projects = await projectService.getUserProjects();
             setOwnedProjects(Array.isArray(projects) ? projects : []);
         } catch (error) {
-            console.error('Ошибка загрузки проектов:', error);
-            setError('Ошибка загрузки проектов');
             setOwnedProjects([]);
         } finally {
             setLoadingProjects(false);
@@ -50,13 +46,10 @@ const GenerationPage = () => {
     const loadProjectSaves = async () => {
         if (!selectedProject) return;
         
-        setError('');
         try {
             const saves = await saveService.getProjectSaves(selectedProject.id);
             setProjectSaves(Array.isArray(saves) ? saves : []);
         } catch (error) {
-            console.error('Ошибка загрузки сохранений:', error);
-            setError('Ошибка загрузки сохранений');
             setProjectSaves([]);
         }
     };
@@ -66,19 +59,15 @@ const GenerationPage = () => {
         
         const token = authService.getToken();
         if (!token || !token.trim()) {
-            setError('Требуется авторизация');
-            alert('Требуется авторизация');
             return;
         }
         
         setSelectedSave(save);
-        setError('');
         
         try {
             setIsGenerating(true);
             setLogs([{ level: 'info', message: 'Начинаем генерацию проекта из сохранения...', timestamp: new Date() }]);
             
-            // Генерируем проект из сохранения
             const response = await projectService.generateFromSaving(save.id);
             const generationId = response.id || response;
             
@@ -86,15 +75,12 @@ const GenerationPage = () => {
                 eventSourceRef.current.close();
             }
             
-            // Запускаем поток логов
             eventSourceRef.current = projectService.startGenerationStream(
                 generationId,
                 (level, message) => setLogs(prev => [...prev, { level, message, timestamp: new Date() }]),
                 () => handleZipReady(generationId)
             );
         } catch (error) {
-            console.error('Ошибка генерации:', error);
-            setError('Ошибка генерации: ' + error.message);
             setLogs(prev => [...prev, { 
                 level: 'error', 
                 message: `Ошибка генерации: ${error.message}`, 
@@ -129,7 +115,6 @@ const GenerationPage = () => {
             
             setTimeout(() => URL.revokeObjectURL(url), 100);
         } catch (error) {
-            setError('Ошибка скачивания: ' + error.message);
             setLogs(prev => [...prev, { 
                 level: 'error', 
                 message: `Ошибка скачивания: ${error.message}`, 
@@ -147,12 +132,6 @@ const GenerationPage = () => {
     return (
         <div className="generation-page">
             <h2>Генерация проекта</h2>
-
-            {error && (
-                <div className="error-message">
-                    ⚠️ {error}
-                </div>
-            )}
 
             <div className="generation-controls">
                 <div className="project-config-section">

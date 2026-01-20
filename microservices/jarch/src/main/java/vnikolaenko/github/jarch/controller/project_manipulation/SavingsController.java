@@ -96,6 +96,48 @@ public class SavingsController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping(path = "update/{savingId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> updateSave(
+            @PathVariable Long savingId,
+            @RequestParam("saveName") String saveName,
+            @RequestParam("entityConfig") MultipartFile entityConfigFile,
+            @RequestParam("appConfig") MultipartFile appConfigFile) throws Exception {
+        
+        Optional<Saving> existingSaving = savingService.getSavingById(savingId);
+        if (existingSaving.isEmpty()) {
+            throw new AccessDeniedException("Saving not found");
+        }
+        
+        Saving saving = existingSaving.get();
+        projectAccessService.validateProjectAccess(saving.getProject().getId());
+        
+        String username = securityUtils.getCurrentUsername();
+        
+        saving.setName(saveName);
+        savingService.save(saving);
+
+        projectFileService.deleteFilesBySaving(savingId);
+        
+        projectFileService.saveConfigFile(
+                entityConfigFile,
+                saving.getProject(),
+                saving,
+                FileType.ENTITY_CONFIG
+        );
+        
+        projectFileService.saveConfigFile(
+                appConfigFile,
+                saving.getProject(),
+                saving,
+                FileType.APP_CONFIG
+        );
+
+        rabbitService.sendUserMessage(new UserMessage(username, 
+                username + " обновил сохранение под названием " + saveName + ".",
+                userService.getUserEmail(username)));
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("download-entity/{savingId}")
     public ResponseEntity<byte[]> downloadEntityConfig(@PathVariable Long savingId) throws Exception {
         Saving saving = savingService.getSavingById(savingId)
@@ -122,5 +164,55 @@ public class SavingsController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"app-config.json\"")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(content);
+    }
+
+    @GetMapping("config/{savingId}")
+    public ResponseEntity<ConfigResponse> getConfig(@PathVariable Long savingId) throws Exception {
+        Saving saving = savingService.getSavingById(savingId)
+                .orElseThrow(() -> new AccessDeniedException("Saving not found"));
+        projectAccessService.validateProjectAccess(saving.getProject().getId());
+        
+        byte[] entityContent = projectFileService.getFileContent(savingId, FileType.ENTITY_CONFIG);
+        byte[] appContent = projectFileService.getFileContent(savingId, FileType.APP_CONFIG);
+        
+        String entityConfig = new String(entityContent, java.nio.charset.StandardCharsets.UTF_8);
+        String appConfig = new String(appContent, java.nio.charset.StandardCharsets.UTF_8);
+        
+        ConfigResponse response = new ConfigResponse();
+        response.setSaving(saving);
+        response.setEntityConfig(entityConfig);
+        response.setAppConfig(appConfig);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    public static class ConfigResponse {
+        private Saving saving;
+        private String entityConfig;
+        private String appConfig;
+        
+        public Saving getSaving() {
+            return saving;
+        }
+        
+        public void setSaving(Saving saving) {
+            this.saving = saving;
+        }
+        
+        public String getEntityConfig() {
+            return entityConfig;
+        }
+        
+        public void setEntityConfig(String entityConfig) {
+            this.entityConfig = entityConfig;
+        }
+        
+        public String getAppConfig() {
+            return appConfig;
+        }
+        
+        public void setAppConfig(String appConfig) {
+            this.appConfig = appConfig;
+        }
     }
 }

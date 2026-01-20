@@ -211,7 +211,7 @@ button:disabled {
 }
 
 .auth-form .form-group:last-child {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .auth-form label {
@@ -648,4 +648,35 @@ input[type="file"]::file-selector-button:hover {
 input[type="file"]::file-selector-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.project-metadata {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.project-owner {
+    color: var(--color-text-secondary);
+}
+
+.owner-item {
+    background-color: rgba(90, 90, 138, 0.1);
+    border-left: 3px solid var(--color-border-focus);
+}
+
+.owner-badge {
+    background-color: var(--color-border-focus);
+    color: var(--color-text-primary);
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 0.8rem;
+}
+
+.project-owner-info {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-top: 5px;
 }

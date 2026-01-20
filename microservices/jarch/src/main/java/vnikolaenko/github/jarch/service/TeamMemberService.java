@@ -24,12 +24,31 @@ public class TeamMemberService {
     public void save(TeamMember teamMember, long projectId, String username) {
         Optional<Project> project = projectRepository.findById(projectId);
         if (project.isEmpty()) {
-            throw new RuntimeException("Project not found");
+            throw new RuntimeException("Проект не найден");
         }
-        if (!project.get().getOwner().equals(username)) {
-            throw new RuntimeException("You are not the owner of this project");
+        
+        Project projectEntity = project.get();
+        
+        if (!projectEntity.getOwner().equals(username)) {
+            throw new RuntimeException("Вы не являетесь владельцем этого проекта");
         }
-        teamMember.setProject(project.get());
+        
+        if (teamMember.getUsername().equals(username)) {
+            throw new RuntimeException("Нельзя добавить самого себя в участники");
+        }
+        
+        if (teamMember.getUsername().equals(projectEntity.getOwner())) {
+            throw new RuntimeException("Этот пользователь уже является владельцем проекта");
+        }
+        
+        boolean alreadyMember = teamMemberRepository.findAllByProject_Id(projectId).stream()
+                .anyMatch(tm -> tm.getUsername().equals(teamMember.getUsername()));
+        
+        if (alreadyMember) {
+            throw new RuntimeException("Пользователь уже добавлен в проект");
+        }
+        
+        teamMember.setProject(projectEntity);
         teamMemberRepository.save(teamMember);
     }
 
@@ -37,11 +56,26 @@ public class TeamMemberService {
     public void delete(String memberUsername, long projectId, String username) {
         Optional<Project> project = projectRepository.findById(projectId);
         if (project.isEmpty()) {
-            throw new RuntimeException("Project not found");
+            throw new RuntimeException("Проект не найден");
         }
-        if (!project.get().getOwner().equals(username)) {
-            throw new RuntimeException("You are not the owner of this project");
+        
+        Project projectEntity = project.get();
+        
+        if (!projectEntity.getOwner().equals(username)) {
+            throw new RuntimeException("Вы не являетесь владельцем этого проекта");
         }
+        
+        if (memberUsername.equals(projectEntity.getOwner())) {
+            throw new RuntimeException("Нельзя удалить владельца проекта");
+        }
+        
+        boolean memberExists = teamMemberRepository.findAllByProject_Id(projectId).stream()
+                .anyMatch(tm -> tm.getUsername().equals(memberUsername));
+        
+        if (!memberExists) {
+            throw new RuntimeException("Участник не найден в проекте");
+        }
+        
         teamMemberRepository.deleteTeamMemberByUsernameAndProject_Id(memberUsername, projectId);
     }
 }

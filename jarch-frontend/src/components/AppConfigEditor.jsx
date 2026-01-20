@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { JsonEditor } from 'json-edit-react';
 import customJsonEditorTheme from './JsonTheme';
 
-const AppConfigEditor = ({ onChange, onValidationChange }) => {
-    const [data, setData] = useState({
+const AppConfigEditor = ({ onChange, onValidationChange, initialData = null }) => {
+    const defaultData = {
         basePackage: "",
         applicationName: "",
         buildTool: "MAVEN",
@@ -19,7 +19,18 @@ const AppConfigEditor = ({ onChange, onValidationChange }) => {
             ddlAuto: "update",
             poolSize: 10
         }
-    });
+    };
+
+    const [data, setData] = useState(defaultData);
+
+    useEffect(() => {
+        console.log('AppConfigEditor получил initialData:', initialData);
+        if (initialData) {
+            setData(initialData);
+        } else {
+            setData(defaultData);
+        }
+    }, [initialData]);
 
     const buildToolEnum = {
         enum: "Build Tool",
@@ -94,6 +105,7 @@ const AppConfigEditor = ({ onChange, onValidationChange }) => {
     };
 
     const handleDataChange = (newData) => {
+        console.log('AppConfigEditor изменен:', newData);
         setData(newData);
         
         const errors = validateConfig(newData);

@@ -17,6 +17,16 @@ export const saveService = {
         return request(`/project-saves/get/${savingId}`);
     },
 
+    async getSavingConfig(savingId) {
+        try {
+            const config = await request(`/project-saves/config/${savingId}`);
+            return config;
+        } catch (error) {
+            console.error('Ошибка загрузки конфигурации:', error);
+            throw error;
+        }
+    },
+
     async createSave(projectId, saveName, entityConfigFile, appConfigFile) {
         const formData = new FormData();
         formData.append('saveName', saveName);
@@ -26,6 +36,18 @@ export const saveService = {
 
         return request('/project-saves/save', {
             method: 'POST',
+            body: formData
+        });
+    },
+
+    async updateSave(savingId, saveName, entityConfigFile, appConfigFile) {
+        const formData = new FormData();
+        formData.append('saveName', saveName);
+        formData.append('entityConfig', entityConfigFile);
+        formData.append('appConfig', appConfigFile);
+
+        return request(`/project-saves/update/${savingId}`, {
+            method: 'PUT',
             body: formData
         });
     },
