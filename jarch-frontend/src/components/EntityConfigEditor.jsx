@@ -7,7 +7,15 @@ const EntityConfigEditor = ({ onChange, onValidationChange, initialData = null }
         entities: []
     };
     
-    const [data, setData] = useState(initialData || defaultData);
+    const [data, setData] = useState(() => {
+        const savedData = localStorage.getItem('entityConfigData');
+        try {
+            return savedData ? JSON.parse(savedData) : (initialData || defaultData);
+        } catch (e) {
+            return initialData || defaultData;
+        }
+    });
+    
     const [errors, setErrors] = useState([]);
     const [entityNames, setEntityNames] = useState([]);
     const [isValid, setIsValid] = useState(false);
@@ -16,11 +24,27 @@ const EntityConfigEditor = ({ onChange, onValidationChange, initialData = null }
     useEffect(() => {
         if (initialData) {
             setData(initialData);
+            localStorage.setItem('entityConfigData', JSON.stringify(initialData));
             setEditorKey(Date.now());
         } else {
-            setData(defaultData);
+            const savedData = localStorage.getItem('entityConfigData');
+            if (savedData) {
+                try {
+                    setData(JSON.parse(savedData));
+                } catch (e) {
+                    setData(defaultData);
+                }
+            } else {
+                setData(defaultData);
+            }
         }
     }, [initialData]);
+
+    useEffect(() => {
+        if (data) {
+            localStorage.setItem('entityConfigData', JSON.stringify(data));
+        }
+    }, [data]);
 
     useEffect(() => {
         const names = data.entities
@@ -287,6 +311,22 @@ const EntityConfigEditor = ({ onChange, onValidationChange, initialData = null }
         handleDataChange({ ...data, entities: newEntities });
     };
 
+    const restrictDelete = (node) => {
+        const path = node.path ? node.path.join('.') : '';
+        
+        if (path === '' || path === 'entities') {
+            return true;
+        }
+        
+        if (path.match(/^entities\[\d+\]$/) ||
+            path.match(/^entities\[\d+\]\.fields\[\d+\]$/) ||
+            path.match(/^entities\[\d+\]\.fields\[\d+\]\.relation$/)) {
+            return false;
+        }
+        
+        return true;
+    };
+
     const restrictTypeSelection = (node) => {
         const path = node.path ? node.path.join('.') : '';
         const cleanPath = path.replace(/\[\d+\]/g, '[*]');
@@ -354,7 +394,11 @@ const EntityConfigEditor = ({ onChange, onValidationChange, initialData = null }
     return (
         <div className="entity-editor-container">
             <div className="entity-controls-fixed">
-                <button className="add-entity-btn" onClick={addEntity}>
+                <button 
+                    type="button"
+                    className="add-entity-btn" 
+                    onClick={addEntity}
+                >
                     + Сущность
                 </button>
                 
@@ -363,12 +407,14 @@ const EntityConfigEditor = ({ onChange, onValidationChange, initialData = null }
                         <h4>{entity.name || `Сущность ${entityIndex + 1}`}</h4>
                         <div className="entity-controls-compact">
                             <button 
+                                type="button"
                                 className="add-field-btn"
                                 onClick={() => addField(entityIndex, false)}
                             >
                                 + Поле
                             </button>
                             <button 
+                                type="button"
                                 className="add-field-btn"
                                 onClick={() => addField(entityIndex, true)}
                             >
@@ -379,32 +425,45 @@ const EntityConfigEditor = ({ onChange, onValidationChange, initialData = null }
                 ))}
             </div>
             
-            <JsonEditor
-                key={editorKey} 
-                data={data}
-                setData={handleDataChange}
-                restrictTypeSelection={restrictTypeSelection}
-                restrictEdit={restrictEdit}
-                showTypesSelector={true}
-                restrictAdd={(node) => {
-                    const path = node.path ? node.path.join('.') : '';
-                    return !path.includes('entities') && !path.includes('fields');
-                }}
-                restrictDelete={(node) => {
-                    const path = node.path ? node.path.join('.') : '';
-                    return path === '' || path === 'entities';
-                }}
-                restrictDrag={() => true}
-                theme={customJsonEditorTheme} 
-                icons={{
-                    add: <span style={{ display: 'none' }} />,
-                    delete: <span style={{ display: 'none' }} />
-                }}
-                style={{
-                    minWidth: '100%',
-                    width: '100%'
-                }}
-            />
+            <div className="config-editor-wrapper" style={{ 
+                width: '100%', 
+                minWidth: '100%',
+                minHeight: '500px',
+                height: '500px',
+                overflow: 'hidden',
+                position: 'relative',
+                marginTop: '10px'
+            }}>
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    overflow: 'auto'
+                }}>
+                    <JsonEditor
+                        key={editorKey} 
+                        data={data}
+                        setData={handleDataChange}
+                        restrictTypeSelection={restrictTypeSelection}
+                        restrictEdit={restrictEdit}
+                        restrictDelete={restrictDelete}
+                        showTypesSelector={true}
+                        restrictAdd={(node) => {
+                            const path = node.path ? node.path.join('.') : '';
+                            return !path.includes('entities') && !path.includes('fields');
+                        }}
+                        restrictDrag={() => true}
+                        theme={customJsonEditorTheme} 
+                        style={{
+                            minWidth: '100%',
+                            width: '100%',
+                            minHeight: '100%'
+                        }}
+                    />
+                </div>
+            </div>
         </div>
     );
 };

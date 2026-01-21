@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AppConfigBuilderPage from '../pages/AppConfigBuilderPage';
 import { saveService } from '../services/saveService';
+import ErrorDisplay from '../components/ErrorDisplay';
 
 const ConfigBuilderSection = ({
     selectedProject,
@@ -21,8 +22,15 @@ const ConfigBuilderSection = ({
     const [editingSaveId, setEditingSaveId] = useState(null);
     const [currentSaveName, setCurrentSaveName] = useState('');
     const [editorKey, setEditorKey] = useState(Date.now());
+    
+    const [appErrors, setAppErrors] = useState([]);
+    const [entityErrors, setEntityErrors] = useState([]);
+    
+    const [activeEditorTab, setActiveEditorTab] = useState('app');
 
-    const handleSaveToProject = async () => {
+    const handleSaveToProject = async (e) => {
+        if (e) e.preventDefault();
+        
         if (!selectedProject || !areConfigsValid || !saveName.trim()) {
             return;
         }
@@ -61,11 +69,16 @@ const ConfigBuilderSection = ({
             
             onConfigSaved();
             resetForm();
+            
+            localStorage.removeItem('appConfigData');
+            localStorage.removeItem('entityConfigData');
+            
         } catch (error) {
         }
     };
 
-    const handleDownloadConfig = () => {
+    const handleDownloadConfig = (e) => {
+        if (e) e.preventDefault();
         if (!areConfigsValid) return;
         
         let fileName = 'config';
@@ -150,6 +163,8 @@ const ConfigBuilderSection = ({
             onConfigSaved();
             if (editingSaveId === savingId) {
                 resetForm();
+                localStorage.removeItem('appConfigData');
+                localStorage.removeItem('entityConfigData');
             }
         } catch (error) {
         }
@@ -187,6 +202,9 @@ const ConfigBuilderSection = ({
             if (onEntityConfigChange) onEntityConfigChange(entityData);
             if (onAppConfigChange) onAppConfigChange(appData);
             
+            setEntityErrors([]);
+            setAppErrors([]);
+            
             if (onEntityConfigValidationChange) onEntityConfigValidationChange(true);
             if (onAppConfigValidationChange) onAppConfigValidationChange(true);
             
@@ -195,6 +213,9 @@ const ConfigBuilderSection = ({
             setEditingSaveId(savingId);
             
             setEditorKey(Date.now());
+            
+            localStorage.setItem('appConfigData', JSON.stringify(appData));
+            localStorage.setItem('entityConfigData', JSON.stringify(entityData));
             
         } catch (error) {
         } finally {
@@ -210,8 +231,14 @@ const ConfigBuilderSection = ({
         setEntityConfig(null);
         setEditorKey(Date.now());
         
+        setAppErrors([]);
+        setEntityErrors([]);
+        
         if (onEntityConfigValidationChange) onEntityConfigValidationChange(false);
         if (onAppConfigValidationChange) onAppConfigValidationChange(false);
+        
+        localStorage.removeItem('appConfigData');
+        localStorage.removeItem('entityConfigData');
     };
 
     const handleAppConfigChange = (config) => {
@@ -224,18 +251,35 @@ const ConfigBuilderSection = ({
         if (onEntityConfigChange) onEntityConfigChange(config);
     };
 
-    const handleAppConfigValidationChange = (isValid) => {
+    const handleAppConfigValidationChange = (isValid, errors = []) => {
+        setAppErrors(errors);
         if (onAppConfigValidationChange) onAppConfigValidationChange(isValid);
     };
 
-    const handleEntityConfigValidationChange = (isValid) => {
+    const handleEntityConfigValidationChange = (isValid, errors = []) => {
+        setEntityErrors(errors);
         if (onEntityConfigValidationChange) onEntityConfigValidationChange(isValid);
+    };
+
+    const handleEditorTabChange = (tab) => {
+        setActiveEditorTab(tab);
+    };
+
+    const handleFormKeyDown = (e) => {
+        if (e.key === 'Enter' && e.target.type !== 'text' && e.target.type !== 'textarea') {
+            e.preventDefault();
+        }
     };
 
     useEffect(() => {
         if (selectedProject) {
             resetForm();
         }
+        
+        return () => {
+            localStorage.removeItem('appConfigData');
+            localStorage.removeItem('entityConfigData');
+        };
     }, [selectedProject]);
 
     const cancelEditing = () => {
@@ -266,7 +310,7 @@ const ConfigBuilderSection = ({
 
                     <div className="save-controls">
                         <h4>Сохранение конфигураций</h4>
-                        <div className="save-form">
+                        <form onSubmit={handleSaveToProject} className="save-form" onKeyDown={handleFormKeyDown}>
                             <input
                                 type="text"
                                 value={saveName}
@@ -277,6 +321,7 @@ const ConfigBuilderSection = ({
                             />
                             <div className="action-buttons">
                                 <button
+                                    type="button"
                                     onClick={handleDownloadConfig}
                                     disabled={!areConfigsValid || loading}
                                     className="download-button"
@@ -286,7 +331,7 @@ const ConfigBuilderSection = ({
 
                                 {isProjectOwner && (
                                     <button
-                                        onClick={handleSaveToProject}
+                                        type="submit"
                                         disabled={!areConfigsValid || !saveName.trim() || loading}
                                         className="save-project-button"
                                     >
@@ -296,6 +341,7 @@ const ConfigBuilderSection = ({
                                 
                                 {editingSaveId && (
                                     <button
+                                        type="button"
                                         onClick={cancelEditing}
                                         className="cancel-edit-button"
                                     >
@@ -303,7 +349,7 @@ const ConfigBuilderSection = ({
                                     </button>
                                 )}
                             </div>
-                        </div>
+                        </form>
                     </div>
 
                     {projectSaves && projectSaves.length > 0 && (
@@ -323,6 +369,7 @@ const ConfigBuilderSection = ({
                                         </div>
                                         <div className="save-actions">
                                             <button 
+                                                type="button"
                                                 onClick={() => handleDownloadFromProject(save)}
                                                 disabled={loading}
                                                 className="download-save-button"
@@ -332,6 +379,7 @@ const ConfigBuilderSection = ({
                                             {isProjectOwner ? (
                                                 <>
                                                     <button 
+                                                        type="button"
                                                         onClick={() => loadConfigForView(save)}
                                                         disabled={loading || loadingConfig}
                                                         className={editingSaveId === save.id ? "edit-save-button active" : "edit-save-button"}
@@ -339,6 +387,7 @@ const ConfigBuilderSection = ({
                                                         {editingSaveId === save.id ? 'Выбрано' : 'Редактировать'}
                                                     </button>
                                                     <button 
+                                                        type="button"
                                                         onClick={() => handleDeleteSave(save)}
                                                         disabled={loading || save.id === editingSaveId}
                                                         className="delete-save-button"
@@ -348,6 +397,7 @@ const ConfigBuilderSection = ({
                                                 </>
                                             ) : (
                                                 <button 
+                                                    type="button"
                                                     onClick={() => loadConfigForView(save)}
                                                     disabled={loading || loadingConfig}
                                                     className={editingSaveId === save.id ? "view-save-button active" : "view-save-button"}
@@ -376,9 +426,18 @@ const ConfigBuilderSection = ({
                 onEntityConfigChange={handleEntityConfigChange}
                 onAppConfigValidationChange={handleAppConfigValidationChange}
                 onEntityConfigValidationChange={handleEntityConfigValidationChange}
+                onEditorTabChange={handleEditorTabChange}
                 initialAppConfig={appConfig}
                 initialEntityConfig={entityConfig}
             />
+            
+            <div className="errors-container">
+                <ErrorDisplay 
+                    activeTab={activeEditorTab}
+                    appErrors={appErrors}
+                    entityErrors={entityErrors}
+                />
+            </div>
         </div>
     );
 };

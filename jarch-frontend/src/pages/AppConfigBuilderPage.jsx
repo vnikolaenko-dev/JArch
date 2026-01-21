@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AppConfigEditor from '../components/AppConfigEditor';
 import EntityConfigEditor from '../components/EntityConfigEditor';
 
@@ -7,18 +7,32 @@ const AppConfigBuilderPage = ({
     onEntityConfigChange,
     onAppConfigValidationChange,
     onEntityConfigValidationChange,
+    onEditorTabChange,
     initialAppConfig = null,
     initialEntityConfig = null
 }) => {
-    const [activeTab, setActiveTab] = useState('app');
+    const [activeTab, setActiveTab] = useState(() => {
+        const savedTab = localStorage.getItem('configBuilderActiveTab');
+        return savedTab || 'app';
+    });
+    
     const [appConfig, setAppConfig] = useState(initialAppConfig);
     const [entityConfig, setEntityConfig] = useState(initialEntityConfig);
     
     const [appEditorKey, setAppEditorKey] = useState(Date.now());
     const [entityEditorKey, setEntityEditorKey] = useState(Date.now());
+    
+    const appEditorRef = useRef(null);
+    const entityEditorRef = useRef(null);
 
     useEffect(() => {
-        console.log('AppConfigBuilderPage получил новые initialAppConfig:', initialAppConfig);
+        localStorage.setItem('configBuilderActiveTab', activeTab);
+        if (onEditorTabChange) {
+            onEditorTabChange(activeTab);
+        }
+    }, [activeTab, onEditorTabChange]);
+
+    useEffect(() => {
         if (initialAppConfig) {
             setAppConfig(initialAppConfig);
             setAppEditorKey(Date.now());
@@ -26,7 +40,6 @@ const AppConfigBuilderPage = ({
     }, [initialAppConfig]);
 
     useEffect(() => {
-        console.log('AppConfigBuilderPage получил новые initialEntityConfig:', initialEntityConfig);
         if (initialEntityConfig) {
             setEntityConfig(initialEntityConfig);
             setEntityEditorKey(Date.now());
@@ -34,7 +47,6 @@ const AppConfigBuilderPage = ({
     }, [initialEntityConfig]);
 
     const handleAppConfigChange = (newConfig) => {
-        console.log('App config изменился в AppConfigBuilderPage:', newConfig);
         setAppConfig(newConfig);
         if (onAppConfigChange) {
             onAppConfigChange(newConfig);
@@ -42,36 +54,41 @@ const AppConfigBuilderPage = ({
     };
 
     const handleEntityConfigChange = (newConfig) => {
-        console.log('Entity config изменился в AppConfigBuilderPage:', newConfig);
         setEntityConfig(newConfig);
         if (onEntityConfigChange) {
             onEntityConfigChange(newConfig);
         }
     };
 
-    const handleAppConfigValidation = (isValid) => {
+    const handleAppConfigValidation = (isValid, errors = []) => {
         if (onAppConfigValidationChange) {
-            onAppConfigValidationChange(isValid);
+            onAppConfigValidationChange(isValid, errors);
         }
     };
 
-    const handleEntityConfigValidation = (isValid) => {
+    const handleEntityConfigValidation = (isValid, errors = []) => {
         if (onEntityConfigValidationChange) {
-            onEntityConfigValidationChange(isValid);
+            onEntityConfigValidationChange(isValid, errors);
         }
+    };
+
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
     };
 
     return (
         <div className="config-builder-page">
             <div className="config-builder-controls">
                 <button 
-                    onClick={() => setActiveTab('app')}
+                    type="button"
+                    onClick={() => handleTabChange('app')}
                     className={activeTab === 'app' ? 'active' : ''}
                 >
                     [app-config.json]
                 </button>
                 <button 
-                    onClick={() => setActiveTab('entity')}
+                    type="button"
+                    onClick={() => handleTabChange('entity')}
                     className={activeTab === 'entity' ? 'active' : ''}
                 >
                     [entity-config.json]
@@ -80,7 +97,7 @@ const AppConfigBuilderPage = ({
 
             <div className="json-editor-container">
                 {activeTab === 'app' ? (
-                    <div className="json-editor-wrapper">
+                    <div className="json-editor-wrapper" ref={appEditorRef}>
                         <AppConfigEditor 
                             key={`app-${appEditorKey}`}
                             onChange={handleAppConfigChange}
@@ -89,7 +106,7 @@ const AppConfigBuilderPage = ({
                         />
                     </div>
                 ) : (
-                    <div className="json-editor-wrapper">
+                    <div className="json-editor-wrapper" ref={entityEditorRef}>
                         <EntityConfigEditor 
                             key={`entity-${entityEditorKey}`}
                             onChange={handleEntityConfigChange}

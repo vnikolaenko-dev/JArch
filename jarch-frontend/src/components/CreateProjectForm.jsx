@@ -5,12 +5,10 @@ const CreateProjectForm = ({ onProjectCreated, loading }) => {
     const [showForm, setShowForm] = useState(false);
     const [projectName, setProjectName] = useState('');
     const [projectDescription, setProjectDescription] = useState('');
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (!projectName.trim()) return;
-
         try {
             await projectService.createProject({
                 name: projectName,
@@ -19,14 +17,24 @@ const CreateProjectForm = ({ onProjectCreated, loading }) => {
             
             setProjectName('');
             setProjectDescription('');
+            setError('');
             setShowForm(false);
             onProjectCreated();
-        } catch {}
+        } catch (error) {
+            setError(error.message || 'Ошибка создания проекта');
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
     };
 
     return (
         <div className="create-project-section">
             <button 
+                type="button"
                 onClick={() => setShowForm(!showForm)}
                 className="toggle-form-button"
                 disabled={loading}
@@ -35,13 +43,16 @@ const CreateProjectForm = ({ onProjectCreated, loading }) => {
             </button>
             
             {showForm && (
-                <form onSubmit={handleSubmit} className="project-form">
+                <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="project-form">
                     <div className="form-group">
                         <label>Название проекта:</label>
                         <input 
                             type="text" 
                             value={projectName}
-                            onChange={(e) => setProjectName(e.target.value)}
+                            onChange={(e) => {
+                                setProjectName(e.target.value);
+                                setError('');
+                            }}
                             placeholder="Введите название проекта" 
                             required 
                             disabled={loading}
@@ -51,12 +62,22 @@ const CreateProjectForm = ({ onProjectCreated, loading }) => {
                         <label>Описание:</label>
                         <textarea 
                             value={projectDescription}
-                            onChange={(e) => setProjectDescription(e.target.value)}
+                            onChange={(e) => {
+                                setProjectDescription(e.target.value);
+                                setError('');
+                            }}
                             placeholder="Описание проекта" 
                             rows="3"
                             disabled={loading}
                         />
                     </div>
+                    
+                    {error && (
+                        <div className="error-message">
+                            {error}
+                        </div>
+                    )}
+                    
                     <button 
                         type="submit"
                         disabled={loading}
