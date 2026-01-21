@@ -14,6 +14,18 @@ public class UserController {
     private AppUserRepository appUserRepository;
     @GetMapping("/{username}")
     public ResponseEntity<String> getEmailByUsername(@PathVariable String username) {
-        return ResponseEntity.status(HttpStatus.OK).body(appUserRepository.findByUsername(username).get().getEmail());
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(appUserRepository.findByUsername(username).get().getEmail());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Такого пользователя не существует.");
+        }
+    }
+    @GetMapping("exist/{username}")
+    public ResponseEntity<Boolean> doesUserExist(@PathVariable String username) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(appUserRepository.findByUsername(username).isPresent());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Boolean.FALSE);
+        }
     }
 }

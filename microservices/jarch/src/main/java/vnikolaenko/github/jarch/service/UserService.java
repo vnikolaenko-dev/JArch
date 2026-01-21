@@ -23,4 +23,8 @@ public class UserService {
             throw new RuntimeException("Failed to get user email: " + e.getMessage());
         }
     }
+
+    public boolean doesUserExist(String username) {
+        return restTemplate.getForObject("http://localhost:8090/user/exist/" + username, Boolean.class).booleanValue();
+    }
 }

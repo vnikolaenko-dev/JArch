@@ -21,7 +21,7 @@ public class GlobalExceptionHandler {
         logger.error("Ошибка: {}", ex.getMessage(), ex);
 
         HttpStatus status = determineHttpStatus(ex);
-        String message = getErrorMessage(ex, status);
+        String message = ex.getMessage();
 
         return ResponseEntity.status(status).body(message);
     }
@@ -42,13 +42,5 @@ public class GlobalExceptionHandler {
         }
 
         return HttpStatus.INTERNAL_SERVER_ERROR;
-    }
-
-    private String getErrorMessage(Throwable ex, HttpStatus status) {
-        if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
-            return "Внутренняя ошибка сервера";
-        }
-
-        return ex.getMessage();
     }
 }

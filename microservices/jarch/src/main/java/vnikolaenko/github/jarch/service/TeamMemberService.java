@@ -16,6 +16,7 @@ import java.util.Optional;
 public class TeamMemberService {
     private final TeamMemberRepository teamMemberRepository;
     private final ProjectRepository projectRepository;
+    private final UserService userService;
 
     public List<TeamMember> findAllByProjectId(long projectId) {
         return teamMemberRepository.findAllByProject_Id(projectId);
@@ -23,6 +24,7 @@ public class TeamMemberService {
 
     public void save(TeamMember teamMember, long projectId, String username) {
         Optional<Project> project = projectRepository.findById(projectId);
+
         if (project.isEmpty()) {
             throw new RuntimeException("Проект не найден");
         }
@@ -35,10 +37,6 @@ public class TeamMemberService {
         
         if (teamMember.getUsername().equals(username)) {
             throw new RuntimeException("Нельзя добавить самого себя в участники");
-        }
-        
-        if (teamMember.getUsername().equals(projectEntity.getOwner())) {
-            throw new RuntimeException("Этот пользователь уже является владельцем проекта");
         }
         
         boolean alreadyMember = teamMemberRepository.findAllByProject_Id(projectId).stream()

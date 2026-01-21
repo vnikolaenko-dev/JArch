@@ -90,8 +90,8 @@ public class SavingsController {
                 FileType.APP_CONFIG
         );
 
-        rabbitService.sendUserMessage(new UserMessage(username, 
-                username + " создал новое сохранение под названием " + saveName + ".",
+        rabbitService.sendUserMessage(new UserMessage(username,
+                username + " создал новое сохранение под названием " + saveName + " в проекте " + saving.getProject().getName() + ".",
                 userService.getUserEmail(username)));
         return ResponseEntity.ok().build();
     }
@@ -132,8 +132,8 @@ public class SavingsController {
                 FileType.APP_CONFIG
         );
 
-        rabbitService.sendUserMessage(new UserMessage(username, 
-                username + " обновил сохранение под названием " + saveName + ".",
+        rabbitService.sendUserMessage(new UserMessage(username,
+                username + " обновил сохранение под названием " + saveName + " в проекте " + saving.getProject().getName() + ".",
                 userService.getUserEmail(username)));
         return ResponseEntity.ok().build();
     }

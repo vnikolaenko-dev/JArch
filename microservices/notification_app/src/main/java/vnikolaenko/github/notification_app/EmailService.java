@@ -18,13 +18,9 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
-    public void sendHtmlEmail(String to, String subject, String text) throws MessagingException {
-        sendHtmlEmail(to, subject, text, null, null, null);
-    }
 
-    public void sendHtmlEmail(String to, String subject, String text,
-                              String buttonText, String buttonLink,
-                              String contactEmail) throws MessagingException {
+
+    public void sendHtmlEmail(String to, String subject, String text) throws MessagingException {
 
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -37,9 +33,8 @@ public class EmailService {
         Context context = new Context();
         context.setVariable("subject", subject);
         context.setVariable("text", text);
-        context.setVariable("buttonText", buttonText);
-        context.setVariable("buttonLink", buttonLink);
-        context.setVariable("contactEmail", contactEmail);
+        context.setVariable("buttonText", "Открыть");
+        context.setVariable("buttonLink", "http://localhost:3000/");
 
         // Генерируем HTML из шаблона
         String htmlContent = templateEngine.process("email/template", context);
