@@ -14,7 +14,12 @@ export const projectService = {
     async getUserProjects() {
         try {
             const projects = await request('/project/all');
-            return Array.isArray(projects) ? projects : [];
+            const joinedProjects = await request('/project/joined');
+
+            const allProjects = Array.isArray(projects) ? projects : [];
+            const joined = Array.isArray(joinedProjects) ? joinedProjects : [];
+
+            return [...allProjects, ...joined];
         } catch (error) {
             console.error('Ошибка загрузки проектов:', error);
             return [];
