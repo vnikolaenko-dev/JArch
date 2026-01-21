@@ -40,10 +40,10 @@ const AuthPage = () => {
                 window.dispatchEvent(new Event('authChange'));
                 navigate('/');
             } else {
-                throw new Error('Не удалось получить токен');
+                throw new Error('Ошибка авторизации');
             }
-        } catch {
-            setError("Неверные данные");
+        } catch (error) {
+            setError(error.message || "Ошибка авторизации");
         } finally {
             setLoading(false);
         }

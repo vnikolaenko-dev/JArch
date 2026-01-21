@@ -7,21 +7,17 @@ import TeamSection from '../components/TeamSection';
 import ConfigBuilderSection from '../components/ConfigBuilderSection';
 import CreateProjectForm from '../components/CreateProjectForm';
 import SectionTabs from '../components/SectionTabs';
-import StatusMessage from '../components/StatusMessage';
 
 const ProjectsPage = () => {
     const [ownedProjects, setOwnedProjects] = useState([]);
     const [joinedProjects, setJoinedProjects] = useState([]);
     const [projectsWithConfigs, setProjectsWithConfigs] = useState({});
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
     const [selectedProject, setSelectedProject] = useState(null);
     const [activeSection, setActiveSection] = useState('projects');
     const [projectSaves, setProjectSaves] = useState([]);
     const [members, setMembers] = useState([]);
     
-    // Добавляем состояния для конфигураций
     const [appConfig, setAppConfig] = useState(null);
     const [entityConfig, setEntityConfig] = useState(null);
     const [appConfigValid, setAppConfigValid] = useState(false);
@@ -42,8 +38,6 @@ const ProjectsPage = () => {
     
     const loadAllProjects = async () => {
         setLoading(true);
-        setError('');
-        setSuccess('');
         
         try {
             const [owned, joined] = await Promise.all([
@@ -54,13 +48,13 @@ const ProjectsPage = () => {
             setOwnedProjects(Array.isArray(owned) ? owned : []);
             setJoinedProjects(Array.isArray(joined) ? joined : []);
             
-            // Проверяем наличие конфигураций
             const allProjects = [...(Array.isArray(owned) ? owned : []), ...(Array.isArray(joined) ? joined : [])];
             const configsPromises = allProjects.map(async (project) => {
                 try {
                     const saves = await saveService.getProjectSaves(project.id);
-                    return { projectId: project.id, hasConfigs: Array.isArray(saves) && saves.length > 0 };
-                } catch {
+                    const hasConfigs = Array.isArray(saves) && saves.length > 0;
+                    return { projectId: project.id, hasConfigs };
+                } catch (error) {
                     return { projectId: project.id, hasConfigs: false };
                 }
             });
@@ -73,8 +67,6 @@ const ProjectsPage = () => {
             
             setProjectsWithConfigs(configsMap);
         } catch (err) {
-            console.error('Ошибка загрузки проектов:', err);
-            setError('Ошибка загрузки проектов: ' + err.message);
         } finally {
             setLoading(false);
         }
@@ -87,7 +79,6 @@ const ProjectsPage = () => {
             const teamMembers = await teamService.getTeamMembers(selectedProject.id);
             setMembers(Array.isArray(teamMembers) ? teamMembers : []);
         } catch (err) {
-            console.error('Ошибка загрузки команды:', err);
             setMembers([]);
         }
     };
@@ -99,49 +90,32 @@ const ProjectsPage = () => {
             const saves = await saveService.getProjectSaves(selectedProject.id);
             setProjectSaves(Array.isArray(saves) ? saves : []);
             
-            // Обновляем статус наличия конфигураций
             setProjectsWithConfigs(prev => ({
                 ...prev,
                 [selectedProject.id]: (Array.isArray(saves) && saves.length > 0)
             }));
         } catch (err) {
-            console.error('Ошибка загрузки сохранений:', err);
             setProjectSaves([]);
         }
     };
     
     const handleProjectCreated = () => {
-        setSuccess('Проект успешно создан');
         loadAllProjects();
     };
 
-    const handleMemberAdded = (username) => {
-        setSuccess(`Пользователь ${username} добавлен в проект`);
-        loadTeamMembers();
-    };
-
-    const handleMemberRemoved = (username) => {
-        setSuccess(`Участник ${username} удален из проекта`);
-        loadTeamMembers();
-    };
-
     const handleConfigSaved = () => {
-        setSuccess(`Конфигурации сохранены в проект "${selectedProject?.name}"`);
-        loadProjectSaves();
-    };
-
-    const handleSaveDeleted = () => {
-        setSuccess('Сохранение удалено');
         loadProjectSaves();
     };
 
     const areConfigsValid = appConfigValid && entityConfigValid;
 
+    const isProjectOwner = selectedProject ? 
+        ownedProjects.some(project => project.id === selectedProject.id) : 
+        false;
+
     return (
         <div className="projects-page">
             <h2>Мои проекты</h2>
-            
-            <StatusMessage error={error} success={success} />
             
             <SectionTabs 
                 activeSection={activeSection}
@@ -168,11 +142,7 @@ const ProjectsPage = () => {
             {activeSection === 'team' && (
                 <TeamSection 
                     selectedProject={selectedProject}
-                    members={members}
                     loading={loading}
-                    onMemberAdded={handleMemberAdded}
-                    onMemberRemoved={handleMemberRemoved}
-                    onReloadMembers={loadTeamMembers}
                 />
             )}
             
@@ -182,8 +152,8 @@ const ProjectsPage = () => {
                     projectSaves={projectSaves}
                     areConfigsValid={areConfigsValid}
                     loading={loading}
+                    isProjectOwner={isProjectOwner}
                     onConfigSaved={handleConfigSaved}
-                    onConfigDownloaded={() => setSuccess('Конфигурации скачаны')}
                     onAppConfigChange={setAppConfig}
                     onEntityConfigChange={setEntityConfig}
                     onAppConfigValidationChange={setAppConfigValid}

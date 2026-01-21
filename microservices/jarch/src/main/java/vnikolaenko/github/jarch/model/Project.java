@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,6 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,8 +33,10 @@ public class Project {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
     @OneToMany
+    @JsonIgnore
     private List<TeamMember> teamMembers;
     @OneToMany
+    @JsonIgnore
     private List<Saving> savings;
     @UpdateTimestamp
     private LocalDateTime updatedAt;

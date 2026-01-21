@@ -8,9 +8,11 @@ const ProjectList = ({
     selectedProject, 
     onProjectSelect 
 }) => {
-    const allProjects = [...ownedProjects, ...joinedProjects];
+    const hasOwnedProjects = ownedProjects.length > 0;
+    const hasJoinedProjects = joinedProjects.length > 0;
+    const hasAnyProjects = hasOwnedProjects || hasJoinedProjects;
 
-    if (allProjects.length === 0) {
+    if (!hasAnyProjects) {
         return (
             <div className="no-projects">
                 У вас еще нет проектов. Создайте первый проект!
@@ -20,37 +22,47 @@ const ProjectList = ({
 
     return (
         <div className="projects-list-section">
-            <h3>Мои проекты</h3>
+            {hasOwnedProjects && (
+                <div className="projects-section">
+                    <h3>Мои проекты (владелец)</h3>
+                    <div className="projects-grid">
+                        {ownedProjects.map(project => {
+                            const hasConfig = projectsWithConfigs[project.id] || false;
+                            return (
+                                <ProjectCard
+                                    key={project.id}
+                                    project={project}
+                                    isOwner={true}
+                                    isSelected={selectedProject?.id === project.id}
+                                    hasConfig={hasConfig}
+                                    onSelect={() => onProjectSelect(project)}
+                                />
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
             
-            <div className="projects-grid">
-                {ownedProjects.map(project => {
-                    const hasConfig = projectsWithConfigs[project.id] || false;
-                    return (
-                        <ProjectCard
-                            key={project.id}
-                            project={project}
-                            isOwner={true}
-                            isSelected={selectedProject?.id === project.id}
-                            hasConfig={hasConfig}
-                            onSelect={() => onProjectSelect(project)}
-                        />
-                    );
-                })}
-                
-                {joinedProjects.map(project => {
-                    const hasConfig = projectsWithConfigs[project.id] || false;
-                    return (
-                        <ProjectCard
-                            key={project.id}
-                            project={project}
-                            isOwner={false}
-                            isSelected={selectedProject?.id === project.id}
-                            hasConfig={hasConfig}
-                            onSelect={() => onProjectSelect(project)}
-                        />
-                    );
-                })}
-            </div>
+            {hasJoinedProjects && (
+                <div className="projects-section">
+                    <h3>Присоединенные проекты</h3>
+                    <div className="projects-grid">
+                        {joinedProjects.map(project => {
+                            const hasConfig = projectsWithConfigs[project.id] || false;
+                            return (
+                                <ProjectCard
+                                    key={project.id}
+                                    project={project}
+                                    isOwner={false}
+                                    isSelected={selectedProject?.id === project.id}
+                                    hasConfig={hasConfig}
+                                    onSelect={() => onProjectSelect(project)}
+                                />
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -39,17 +39,17 @@ export const request = async (endpoint, options = {}) => {
             return response;
         }
         
+        const responseText = await response.text();
+        
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API Error:', errorText);
-            throw new Error(errorText || `Ошибка ${response.status}`);
+            console.error('API Error:', responseText);
+            throw new Error(responseText || `Ошибка ${response.status}`);
         }
         
         if (response.status === 204) {
             return null;
         }
         
-        const responseText = await response.text();
         console.log('API Response text:', responseText);
         
         try {

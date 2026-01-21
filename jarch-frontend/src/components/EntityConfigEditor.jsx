@@ -2,14 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { JsonEditor } from 'json-edit-react';
 import customJsonEditorTheme from './JsonTheme';
 
-const EntityConfigEditor = ({ onChange, onValidationChange }) => {
-    const [data, setData] = useState({
+const EntityConfigEditor = ({ onChange, onValidationChange, initialData = null }) => {
+    const defaultData = {
         entities: []
-    });
+    };
     
+    const [data, setData] = useState(initialData || defaultData);
     const [errors, setErrors] = useState([]);
     const [entityNames, setEntityNames] = useState([]);
     const [isValid, setIsValid] = useState(false);
+    const [editorKey, setEditorKey] = useState(Date.now());
+
+    useEffect(() => {
+        if (initialData) {
+            setData(initialData);
+            setEditorKey(Date.now());
+        } else {
+            setData(defaultData);
+        }
+    }, [initialData]);
 
     useEffect(() => {
         const names = data.entities
@@ -333,7 +344,6 @@ const EntityConfigEditor = ({ onChange, onValidationChange }) => {
                 const fieldIndex = parseInt(matches[2]);
                 const field = data.entities[entityIndex]?.fields[fieldIndex];
                 
-
                 return !!field?.relation;
             }
         }
@@ -370,6 +380,7 @@ const EntityConfigEditor = ({ onChange, onValidationChange }) => {
             </div>
             
             <JsonEditor
+                key={editorKey} 
                 data={data}
                 setData={handleDataChange}
                 restrictTypeSelection={restrictTypeSelection}

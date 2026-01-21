@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppConfigBuilderPage from '../pages/AppConfigBuilderPage';
 import { saveService } from '../services/saveService';
 
@@ -7,9 +7,8 @@ const ConfigBuilderSection = ({
     projectSaves,
     areConfigsValid,
     loading,
+    isProjectOwner,
     onConfigSaved,
-    onConfigDownloaded,
-    onDownloadFromProject,
     onAppConfigChange,
     onEntityConfigChange,
     onAppConfigValidationChange,
@@ -18,15 +17,17 @@ const ConfigBuilderSection = ({
     const [saveName, setSaveName] = useState('');
     const [appConfig, setAppConfig] = useState(null);
     const [entityConfig, setEntityConfig] = useState(null);
+    const [loadingConfig, setLoadingConfig] = useState(false);
+    const [editingSaveId, setEditingSaveId] = useState(null);
+    const [currentSaveName, setCurrentSaveName] = useState('');
+    const [editorKey, setEditorKey] = useState(Date.now());
 
     const handleSaveToProject = async () => {
         if (!selectedProject || !areConfigsValid || !saveName.trim()) {
-            alert('Заполните название сохранения и убедитесь, что конфигурации валидны');
             return;
         }
 
         try {
-            // Создаем File объекты из конфигураций
             const appConfigJson = JSON.stringify(appConfig, null, 2);
             const entityConfigJson = JSON.stringify(entityConfig, null, 2);
             
@@ -42,18 +43,25 @@ const ConfigBuilderSection = ({
                 { type: 'application/json' }
             );
 
-            // Используем новый метод API
-            await saveService.createSave(
-                selectedProject.id, 
-                saveName, 
-                entityConfigFile, 
-                appConfigFile
-            );
+            if (editingSaveId) {
+                await saveService.updateSave(
+                    editingSaveId,
+                    saveName,
+                    entityConfigFile,
+                    appConfigFile
+                );
+            } else {
+                await saveService.createSave(
+                    selectedProject.id, 
+                    saveName, 
+                    entityConfigFile, 
+                    appConfigFile
+                );
+            }
             
             onConfigSaved();
-            setSaveName('');
+            resetForm();
         } catch (error) {
-            alert('Ошибка сохранения: ' + error.message);
         }
     };
 
@@ -93,41 +101,34 @@ const ConfigBuilderSection = ({
                 URL.revokeObjectURL(entityUrl);
             }, 100);
         }
-        
-        onConfigDownloaded();
     };
 
-    // Обработчик для скачивания существующего сохранения
     const handleDownloadFromProject = async (save) => {
         if (!selectedProject) return;
 
         try {
-            const savingId = save.id || save;
+            const savingId = save.id;
             
-            // Скачиваем оба файла
             const [entityBlob, appBlob] = await Promise.all([
                 saveService.downloadEntityConfig(savingId),
                 saveService.downloadAppConfig(savingId)
             ]);
             
-            // Создаем ссылки для скачивания
             const entityUrl = URL.createObjectURL(entityBlob);
             const appUrl = URL.createObjectURL(appBlob);
             
             const entityLink = document.createElement('a');
             entityLink.href = entityUrl;
-            entityLink.download = `${save.name || save}_entity.json`;
+            entityLink.download = `${save.name}_entity.json`;
             
             const appLink = document.createElement('a');
             appLink.href = appUrl;
-            appLink.download = `${save.name || save}_app.json`;
+            appLink.download = `${save.name}_app.json`;
             
-            // Скачиваем файлы
             entityLink.click();
             setTimeout(() => {
                 appLink.click();
                 
-                // Очищаем URL
                 setTimeout(() => {
                     URL.revokeObjectURL(entityUrl);
                     URL.revokeObjectURL(appUrl);
@@ -135,26 +136,84 @@ const ConfigBuilderSection = ({
             }, 100);
             
         } catch (error) {
-            alert('Ошибка скачивания: ' + error.message);
         }
     };
 
     const handleDeleteSave = async (save) => {
-        if (!selectedProject || !window.confirm(`Удалить сохранение "${save.name || save}"?`)) {
+        if (!selectedProject) {
             return;
         }
 
         try {
-            const savingId = save.id || save;
+            const savingId = save.id;
             await saveService.deleteSave(savingId);
-            // Вызываем onConfigSaved для обновления списка
             onConfigSaved();
+            if (editingSaveId === savingId) {
+                resetForm();
+            }
         } catch (error) {
-            alert('Ошибка удаления: ' + error.message);
         }
     };
 
-    // Обработчики для конфигураций из AppConfigBuilderPage
+    const loadConfigForView = async (save) => {
+        if (!selectedProject) return;
+        
+        setLoadingConfig(true);
+        try {
+            const savingId = save.id;
+            const configData = await saveService.getSavingConfig(savingId);
+            
+            if (!configData) {
+                throw new Error('Конфигурация не найдена');
+            }
+            
+            let entityData;
+            let appData;
+            
+            try {
+                entityData = typeof configData.entityConfig === 'string' 
+                    ? JSON.parse(configData.entityConfig) 
+                    : configData.entityConfig;
+                appData = typeof configData.appConfig === 'string'
+                    ? JSON.parse(configData.appConfig)
+                    : configData.appConfig;
+            } catch (parseError) {
+                throw new Error('Неверный формат конфигурационных файлов');
+            }
+            
+            setEntityConfig(entityData);
+            setAppConfig(appData);
+            
+            if (onEntityConfigChange) onEntityConfigChange(entityData);
+            if (onAppConfigChange) onAppConfigChange(appData);
+            
+            if (onEntityConfigValidationChange) onEntityConfigValidationChange(true);
+            if (onAppConfigValidationChange) onAppConfigValidationChange(true);
+            
+            setCurrentSaveName(configData.saving.name);
+            setSaveName(configData.saving.name);
+            setEditingSaveId(savingId);
+            
+            setEditorKey(Date.now());
+            
+        } catch (error) {
+        } finally {
+            setLoadingConfig(false);
+        }
+    };
+
+    const resetForm = () => {
+        setSaveName('');
+        setEditingSaveId(null);
+        setCurrentSaveName('');
+        setAppConfig(null);
+        setEntityConfig(null);
+        setEditorKey(Date.now());
+        
+        if (onEntityConfigValidationChange) onEntityConfigValidationChange(false);
+        if (onAppConfigValidationChange) onAppConfigValidationChange(false);
+    };
+
     const handleAppConfigChange = (config) => {
         setAppConfig(config);
         if (onAppConfigChange) onAppConfigChange(config);
@@ -173,6 +232,16 @@ const ConfigBuilderSection = ({
         if (onEntityConfigValidationChange) onEntityConfigValidationChange(isValid);
     };
 
+    useEffect(() => {
+        if (selectedProject) {
+            resetForm();
+        }
+    }, [selectedProject]);
+
+    const cancelEditing = () => {
+        resetForm();
+    };
+
     return (
         <div className="config-builder-content">
             {!selectedProject && (
@@ -185,6 +254,14 @@ const ConfigBuilderSection = ({
                 <>
                     <div className="selected-project-info">
                         <h3>Проект: {selectedProject.name}</h3>
+                        <div className="project-role-badge">
+                            {isProjectOwner ? 'Владелец' : 'Участник'}
+                        </div>
+                        {editingSaveId && (
+                            <div className="editing-notice">
+                                {isProjectOwner ? 'Редактирование' : 'Просмотр'} сохранения: {currentSaveName}
+                            </div>
+                        )}
                     </div>
 
                     <div className="save-controls">
@@ -194,8 +271,9 @@ const ConfigBuilderSection = ({
                                 type="text"
                                 value={saveName}
                                 onChange={(e) => setSaveName(e.target.value)}
-                                placeholder="Название сохранения"
+                                placeholder={editingSaveId ? currentSaveName : "Название сохранения"}
                                 className="save-input"
+                                disabled={!isProjectOwner && editingSaveId}
                             />
                             <div className="action-buttons">
                                 <button
@@ -206,13 +284,24 @@ const ConfigBuilderSection = ({
                                     Скачать конфигурации
                                 </button>
 
-                                <button
-                                    onClick={handleSaveToProject}
-                                    disabled={!areConfigsValid || !saveName.trim() || loading}
-                                    className="save-project-button"
-                                >
-                                    Сохранить в проект
-                                </button>
+                                {isProjectOwner && (
+                                    <button
+                                        onClick={handleSaveToProject}
+                                        disabled={!areConfigsValid || !saveName.trim() || loading}
+                                        className="save-project-button"
+                                    >
+                                        {editingSaveId ? 'Обновить сохранение' : 'Сохранить в проект'}
+                                    </button>
+                                )}
+                                
+                                {editingSaveId && (
+                                    <button
+                                        onClick={cancelEditing}
+                                        className="cancel-edit-button"
+                                    >
+                                        Отмена
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -225,7 +314,7 @@ const ConfigBuilderSection = ({
                                 {projectSaves.map((save, index) => (
                                     <div key={save.id || index} className="save-item">
                                         <div className="save-info">
-                                            <span className="save-name">{save.name || save}</span>
+                                            <span className="save-name">{save.name}</span>
                                             {save.createdAt && (
                                                 <span className="save-date">
                                                     {new Date(save.createdAt).toLocaleDateString()}
@@ -240,13 +329,32 @@ const ConfigBuilderSection = ({
                                             >
                                                 Скачать
                                             </button>
-                                            <button 
-                                                onClick={() => handleDeleteSave(save)}
-                                                disabled={loading}
-                                                className="delete-save-button"
-                                            >
-                                                Удалить
-                                            </button>
+                                            {isProjectOwner ? (
+                                                <>
+                                                    <button 
+                                                        onClick={() => loadConfigForView(save)}
+                                                        disabled={loading || loadingConfig}
+                                                        className={editingSaveId === save.id ? "edit-save-button active" : "edit-save-button"}
+                                                    >
+                                                        {editingSaveId === save.id ? 'Выбрано' : 'Редактировать'}
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteSave(save)}
+                                                        disabled={loading || save.id === editingSaveId}
+                                                        className="delete-save-button"
+                                                    >
+                                                        Удалить
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => loadConfigForView(save)}
+                                                    disabled={loading || loadingConfig}
+                                                    className={editingSaveId === save.id ? "view-save-button active" : "view-save-button"}
+                                                >
+                                                    {editingSaveId === save.id ? 'Просматривается' : 'Просмотреть'}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -263,10 +371,13 @@ const ConfigBuilderSection = ({
             )}
             
             <AppConfigBuilderPage 
+                key={editorKey} 
                 onAppConfigChange={handleAppConfigChange}
                 onEntityConfigChange={handleEntityConfigChange}
                 onAppConfigValidationChange={handleAppConfigValidationChange}
                 onEntityConfigValidationChange={handleEntityConfigValidationChange}
+                initialAppConfig={appConfig}
+                initialEntityConfig={entityConfig}
             />
         </div>
     );

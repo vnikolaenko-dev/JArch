@@ -14,4 +14,6 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     void deleteTeamMemberByUsernameAndProject_Id(String memberUsername, long projectId);
 
     Optional<TeamMember> findByUsername(String userEmail);
+
+    boolean existsByUsernameAndProject_Id(String username, long projectId);
 }

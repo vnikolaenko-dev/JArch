@@ -11,6 +11,7 @@ import vnikolaenko.github.jarch.utils.SecurityUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -19,7 +20,6 @@ public class ProjectService {
     private final TeamMemberRepository teamMemberRepository;
     private final ProjectAccessService projectAccessService;
     private final SecurityUtils securityUtils;
-    private final UserService userService;
 
     public List<Project> getAllUserProjects(String username) {
         return projectRepository.findAllByOwner(username);
@@ -48,14 +48,24 @@ public class ProjectService {
     }
 
     public List<Project> getAllUserJoinedProjects(String username) {
-        String userEmail = userService.getUserEmail(username);
-        Optional<TeamMember> user = teamMemberRepository.findByUsername(userEmail);
-
-        if (user.isEmpty()) {
+        List<TeamMember> teamMembers = teamMemberRepository.findAll()
+            .stream()
+            .filter(tm -> username.equals(tm.getUsername()))
+            .collect(Collectors.toList());
+        
+        if (teamMembers.isEmpty()) {
             return new ArrayList<>();
         }
-
-        return projectRepository.findAllByTeamMembersContaining(user.get());
+        
+        List<Project> projects = new ArrayList<>();
+        for (TeamMember teamMember : teamMembers) {
+            Project project = teamMember.getProject();
+            if (project != null && !projects.contains(project)) {
+                projects.add(project);
+            }
+        }
+        
+        return projects;
     }
 
 

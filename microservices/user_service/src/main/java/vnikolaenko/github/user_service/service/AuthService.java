@@ -2,7 +2,6 @@ package vnikolaenko.github.user_service.service;
 
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vnikolaenko.github.user_service.jwt.JwtService;
@@ -20,8 +19,13 @@ public class AuthService {
 
     public String register(String username, String password, String email) {
         if (appUserRepository.findByUsername(username).isPresent()) {
-            throw new RuntimeException("Username is already in use");
+            throw new RuntimeException("Имя пользователя уже занято");
         }
+        
+        if (appUserRepository.findByEmail(email).isPresent()) {
+            throw new RuntimeException("Email уже используется");
+        }
+        
         appUserRepository.save(new AppUser(username, bCryptPasswordEncoder.encode(password), email));
 
         return jwtService.generateToken(
@@ -34,12 +38,15 @@ public class AuthService {
 
     public String login(String email, String password) {
         Optional<AppUser> appUser = appUserRepository.findByEmail(email);
+        
         if (appUser.isEmpty()) {
-            throw new RuntimeException("Username incorrect");
+            throw new RuntimeException("Пользователь с таким email не найден");
         }
+        
         if (!bCryptPasswordEncoder.matches(password, appUser.get().getPassword())) {
-            throw new RuntimeException("Password incorrect");
+            throw new RuntimeException("Неверный пароль");
         }
+        
         return jwtService.generateToken(
                 User.builder()
                         .username(appUser.get().getUsername())

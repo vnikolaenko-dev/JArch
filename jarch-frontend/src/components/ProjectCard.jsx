@@ -15,10 +15,13 @@ const ProjectCard = ({ project, isOwner, isSelected, hasConfig, onSelect }) => {
             <p className="project-description">
                 {project.description || 'Без описания'}
             </p>
-            <div className="project-footer">
-                <span className="project-config-status">
+            <div className="project-metadata">
+                <div className="project-owner">
+                    <small>Владелец: {project.owner}</small>
+                </div>
+                <div className="project-config-status">
                     {hasConfig ? '✅ Конфигурации' : '❌ Нет конфигураций'}
-                </span>
+                </div>
             </div>
         </div>
     );
