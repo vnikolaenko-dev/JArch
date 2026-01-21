@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { JsonEditor } from 'json-edit-react';
 import customJsonEditorTheme from './JsonTheme';
 
@@ -21,16 +21,74 @@ const AppConfigEditor = ({ onChange, onValidationChange, initialData = null }) =
         }
     };
 
-    const [data, setData] = useState(defaultData);
+    const [data, setData] = useState(() => {
+        const savedData = localStorage.getItem('appConfigData');
+        try {
+            return savedData ? JSON.parse(savedData) : defaultData;
+        } catch (e) {
+            return defaultData;
+        }
+    });
+
+    const isFirstRender = useRef(true);
 
     useEffect(() => {
-        console.log('AppConfigEditor получил initialData:', initialData);
         if (initialData) {
             setData(initialData);
+            localStorage.setItem('appConfigData', JSON.stringify(initialData));
+            setTimeout(() => {
+                const errors = validateConfig(initialData);
+                const isValid = errors.length === 0;
+                if (onValidationChange) {
+                    onValidationChange(isValid, errors);
+                }
+            }, 0);
         } else {
-            setData(defaultData);
+            const savedData = localStorage.getItem('appConfigData');
+            if (savedData) {
+                try {
+                    const parsedData = JSON.parse(savedData);
+                    setData(parsedData);
+                    setTimeout(() => {
+                        const errors = validateConfig(parsedData);
+                        const isValid = errors.length === 0;
+                        if (onValidationChange) {
+                            onValidationChange(isValid, errors);
+                        }
+                    }, 0);
+                } catch (e) {
+                    setData(defaultData);
+                    setTimeout(() => {
+                        const errors = validateConfig(defaultData);
+                        const isValid = errors.length === 0;
+                        if (onValidationChange) {
+                            onValidationChange(isValid, errors);
+                        }
+                    }, 0);
+                }
+            } else {
+                setData(defaultData);
+                setTimeout(() => {
+                    const errors = validateConfig(defaultData);
+                    const isValid = errors.length === 0;
+                    if (onValidationChange) {
+                        onValidationChange(isValid, errors);
+                    }
+                }, 0);
+            }
         }
     }, [initialData]);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        
+        if (data) {
+            localStorage.setItem('appConfigData', JSON.stringify(data));
+        }
+    }, [data]);
 
     const buildToolEnum = {
         enum: "Build Tool",
@@ -105,7 +163,6 @@ const AppConfigEditor = ({ onChange, onValidationChange, initialData = null }) =
     };
 
     const handleDataChange = (newData) => {
-        console.log('AppConfigEditor изменен:', newData);
         setData(newData);
         
         const errors = validateConfig(newData);
@@ -151,26 +208,43 @@ const AppConfigEditor = ({ onChange, onValidationChange, initialData = null }) =
     };
 
     return (
-        <div style={{ width: '100%', minWidth: '100%' }}>
-            <JsonEditor
-                data={data}
-                setData={handleDataChange}
-                restrictTypeSelection={restrictTypeSelection}
-                showTypesSelector={true}
-                restrictAdd={() => true}
-                restrictDelete={() => true}
-                restrictEdit={() => false}
-                restrictDrag={() => true}
-                theme={customJsonEditorTheme} 
-                icons={{
-                    add: <span style={{ display: 'none' }} />,
-                    delete: <span style={{ display: 'none' }} />
-                }}
-                style={{
-                    minWidth: '100%',
-                    width: '100%'
-                }}
-            />
+        <div className="config-editor-wrapper" style={{ 
+            width: '100%', 
+            minWidth: '100%',
+            minHeight: '500px',
+            height: '500px',
+            overflow: 'hidden',
+            position: 'relative'
+        }}>
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                overflow: 'auto'
+            }}>
+                <JsonEditor
+                    data={data}
+                    setData={handleDataChange}
+                    restrictTypeSelection={restrictTypeSelection}
+                    showTypesSelector={true}
+                    restrictAdd={() => true}
+                    restrictDelete={() => true}
+                    restrictEdit={() => false}
+                    restrictDrag={() => true}
+                    theme={customJsonEditorTheme} 
+                    icons={{
+                        add: <span style={{ display: 'none' }} />,
+                        delete: <span style={{ display: 'none' }} />
+                    }}
+                    style={{
+                        minWidth: '100%',
+                        width: '100%',
+                        minHeight: '100%'
+                    }}
+                />
+            </div>
         </div>
     );
 };

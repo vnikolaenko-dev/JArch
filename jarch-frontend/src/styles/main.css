@@ -26,6 +26,7 @@
     --transition-fast: 0.15s ease;
 }
 
+/* ========== БАЗОВЫЕ СТИЛИ ========== */
 html, body {
     font-family: var(--font-family-main);
     background-color: var(--color-bg-primary);
@@ -36,17 +37,14 @@ html, body {
     overflow-x: hidden;
 }
 
-.brackets::before {
-    content: '[';
-}
-.brackets::after {
-    content: ']';
-}
-.brackets::before,
-.brackets::after {
-    color: var(--color-text-accent);
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
 }
 
+/* ========== ТИПОГРАФИЯ ========== */
 h1 {
     font-size: 2.8rem;
     margin-bottom: var(--spacing-lg);
@@ -78,6 +76,20 @@ h4 {
     font-weight: 400;
 }
 
+.brackets::before {
+    content: '[';
+}
+
+.brackets::after {
+    content: ']';
+}
+
+.brackets::before,
+.brackets::after {
+    color: var(--color-text-accent);
+}
+
+/* ========== ФОРМЫ И ИНПУТЫ ========== */
 input, textarea, select {
     width: 100%;
     background: transparent;
@@ -102,6 +114,61 @@ input::placeholder, textarea::placeholder {
     color: var(--color-placeholder);
 }
 
+input:disabled, textarea:disabled, select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Кастомные стили для file input */
+input[type="file"]::-webkit-file-upload-button,
+input[type="file"]::file-selector-button {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    font-family: var(--font-family-main);
+    font-size: 0.9rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    margin-right: var(--spacing-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-transform: lowercase;
+    letter-spacing: 0.08em;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover,
+input[type="file"]::file-selector-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--color-border-hover);
+}
+
+input[type="file"]::-webkit-file-upload-button:disabled,
+input[type="file"]::file-selector-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Кастомные стили для select */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    padding-right: 24px;
+}
+
+option {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+}
+
+option[value=""] {
+    color: var(--color-text-muted);
+}
+
+select::-ms-expand {
+    display: none;
+}
+
 label {
     display: block;
     color: var(--color-label);
@@ -112,6 +179,7 @@ label {
     font-weight: 500;
 }
 
+/* ========== КНОПКИ ========== */
 button {
     background: none;
     border: none;
@@ -140,13 +208,7 @@ button:disabled {
     color: var(--color-button-disabled);
 }
 
-.container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: var(--spacing-lg);
-}
-
+/* ========== КАРТОЧКИ ========== */
 .card {
     background-color: var(--color-bg-card);
     padding: var(--spacing-lg);
@@ -162,11 +224,16 @@ button:disabled {
     transform: translateY(-2px);
 }
 
-
-
+/* ========== ФОРМЫ ========== */
 .form-group {
     margin-bottom: var(--spacing-lg);
 }
+
+.member-form .form-group {
+    margin-bottom: 0;
+}
+
+/* ========== АВТОРИЗАЦИЯ ========== */
 .auth-page {
     display: flex;
     align-items: center;
@@ -180,8 +247,7 @@ button:disabled {
     width: 100%;
     max-width: 400px;
     padding: 30px 20px;
-    margin: 0 auto;
-    margin-bottom: 300px;
+    margin: 0 auto 300px;
     background-color: var(--color-bg-card);
     border: 2px solid var(--color-border);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
@@ -191,15 +257,6 @@ button:disabled {
     text-align: center;
     margin-bottom: 20px;
     color: var(--color-text-primary);
-}
-
-.auth-error {
-    background-color: var(--color-error-bg);
-    color: var(--color-error);
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 2px;
-    font-size: 0.9rem;
 }
 
 .auth-form {
@@ -214,54 +271,9 @@ button:disabled {
     margin-bottom: 10px;
 }
 
-.auth-form label {
-    display: block;
-    color: var(--color-label);
-    font-size: 0.9rem;
-    margin-bottom: 5px;
-}
-
-.auth-form input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid var(--color-border);
-    color: var(--color-text-primary);
-    font-family: var(--font-family-main);
-    padding: 8px 0;
-    outline: none;
-}
-
-.auth-form input:focus {
-    border-bottom-color: var(--color-border-focus);
-}
-
-.auth-form input:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
 .auth-submit-button {
     display: block;
     margin: 0 auto;
-    background: none;
-    border: none;
-    color: var(--color-button);
-    font-family: var(--font-family-main);
-    font-size: 1rem;
-    padding: 10px 20px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.auth-submit-button:hover:not(:disabled) {
-    color: var(--color-button-hover);
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.auth-submit-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
 }
 
 .auth-switch {
@@ -270,25 +282,11 @@ button:disabled {
 }
 
 .auth-switch-button {
-    background: none;
-    border: none;
-    color: var(--color-text-secondary);
-    font-family: var(--font-family-main);
     font-size: 0.9rem;
-    cursor: pointer;
     padding: 5px 10px;
-    transition: all var(--transition-fast);
 }
 
-.auth-switch-button:hover:not(:disabled) {
-    color: var(--color-button-hover);
-}
-
-.auth-switch-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
+/* ========== ВКЛАДКИ ========== */
 .tabs-container {
     display: flex;
     justify-content: center;
@@ -299,7 +297,7 @@ button:disabled {
     border-bottom: 2px solid var(--color-border);
 }
 
-.tab {
+.tab, .section-tab {
     background: none;
     border: none;
     color: var(--color-button);
@@ -314,17 +312,21 @@ button:disabled {
     position: relative;
 }
 
-.tab:hover {
+.section-tab {
+    padding: var(--spacing-xs) var(--spacing-md);
+}
+
+.tab:hover, .section-tab:hover:not(:disabled) {
     color: var(--color-button-hover);
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-.tab.active {
+.tab.active, .section-tab.active {
     color: var(--color-button-hover);
     font-weight: 600;
 }
 
-.tab.active::after {
+.tab.active::after, .section-tab.active::after {
     content: '';
     position: absolute;
     left: 0;
@@ -334,68 +336,14 @@ button:disabled {
     background-color: var(--color-border-focus);
 }
 
-.save-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-sm);
-    border: 1px solid var(--color-border);
-    margin-bottom: var(--spacing-xs);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    background-color: var(--color-bg-card);
+.section-tab.active::after {
+    bottom: -10px;
 }
 
-.save-item:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-color: var(--color-border-hover);
-}
-
-.save-item span {
-    color: var(--color-text-primary);
-    font-weight: 500;
-}
-
-.log-entry {
-    font-family: var(--font-family-main);
-    font-size: 0.85rem;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    margin-bottom: 2px;
-    border-left: 3px solid transparent;
-}
-
-.log-entry[data-level="INFO"] {
-    border-left-color: var(--color-border);
-    color: var(--color-text-secondary);
-}
-
-.log-entry[data-level="SUCCESS"] {
-    border-left-color: var(--color-success);
-    color: var(--color-success);
-    background-color: rgba(119, 255, 119, 0.05);
-}
-
-.log-entry[data-level="ERROR"] {
-    border-left-color: var(--color-error);
-    color: var(--color-error);
-    background-color: var(--color-error-bg);
-}
-
-.json-editor-container {
-    display: flex;
-    justify-content: center;
-    margin: var(--spacing-lg) 0;
-    width: 100%;
-}
-
-.json-editor-wrapper {
-    background-color: var(--color-bg-card);
-    border: 2px solid var(--color-border);
-    border-radius: 2px;
-    width: 100%;
-    max-width: 900px;
-    max-height: 500px;
-    overflow-y: auto;
+.section-tab.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: var(--color-button-disabled);
 }
 
 .section-tabs {
@@ -406,46 +354,7 @@ button:disabled {
     border-bottom: 2px solid var(--color-border);
 }
 
-.section-tab {
-    background: none;
-    border: none;
-    color: var(--color-button);
-    font-family: var(--font-family-main);
-    font-size: 0.95rem;
-    padding: var(--spacing-xs) var(--spacing-md);
-    cursor: pointer;
-    text-transform: lowercase;
-    letter-spacing: 0.08em;
-    transition: all var(--transition-fast);
-    font-weight: 500;
-    position: relative;
-}
-
-.section-tab:hover:not(:disabled) {
-    color: var(--color-button-hover);
-}
-
-.section-tab.active {
-    color: var(--color-button-hover);
-    font-weight: 600;
-}
-
-.section-tab.active::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -10px;
-    width: 100%;
-    height: 3px;
-    background-color: var(--color-border-focus);
-}
-
-.section-tab.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    color: var(--color-button-disabled);
-}
-
+/* ========== ПРОЕКТЫ ========== */
 .projects-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -485,6 +394,25 @@ button:disabled {
     min-height: 40px;
 }
 
+.project-metadata {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.project-owner {
+    color: var(--color-text-secondary);
+}
+
+.project-owner-info {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+/* ========== БЕЙДЖИ ========== */
 .project-badge {
     display: inline-block;
     padding: 2px 8px;
@@ -506,6 +434,15 @@ button:disabled {
     border: 1px solid rgba(119, 119, 255, 0.4);
 }
 
+.owner-badge {
+    background-color: var(--color-border-focus);
+    color: var(--color-text-primary);
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 0.8rem;
+}
+
+/* ========== КОМАНДА И УЧАСТНИКИ ========== */
 .team-management {
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -537,6 +474,11 @@ button:disabled {
     background-color: rgba(255, 255, 255, 0.03);
 }
 
+.owner-item {
+    background-color: rgba(90, 90, 138, 0.1);
+    border-left: 3px solid var(--color-border-focus);
+}
+
 .member-username {
     color: var(--color-text-primary);
     font-weight: 500;
@@ -547,22 +489,98 @@ button:disabled {
     font-size: 0.9rem;
 }
 
-.no-project-selected {
+/* ========== СОХРАНЕНИЯ ========== */
+.save-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-xs);
+    cursor: pointer;
+    transition: all var(--transition-fast);
     background-color: var(--color-bg-card);
-    padding: var(--spacing-lg);
-    border: 2px solid var(--color-border);
-    text-align: center;
-    margin-bottom: var(--spacing-lg);
 }
 
-.error-message, .success-message {
+.save-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-border-hover);
+}
+
+.save-item span {
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+/* ========== ЛОГИ ========== */
+.log-viewer {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    font-size: 0.9rem;
+}
+
+.log-entry {
+    font-family: var(--font-family-main);
+    font-size: 0.85rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    margin-bottom: 2px;
+    border-left: 3px solid transparent;
+}
+
+.log-entry[data-level="INFO"] {
+    border-left-color: var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.log-entry[data-level="SUCCESS"] {
+    border-left-color: var(--color-success);
+    color: var(--color-success);
+    background-color: rgba(119, 255, 119, 0.05);
+}
+
+.log-entry[data-level="ERROR"] {
+    border-left-color: var(--color-error);
+    color: var(--color-error);
+    background-color: var(--color-error-bg);
+}
+
+/* ========== JSON EDITOR ========== */
+.json-editor-container {
+    display: flex;
+    justify-content: center;
+    margin: var(--spacing-lg) 0;
+    width: 100%;
+}
+
+.json-editor-wrapper {
+    background-color: var(--color-bg-card);
+    border: 2px solid var(--color-border);
+    border-radius: 2px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* ========== СООБЩЕНИЯ ========== */
+.auth-error, .error-message, .success-message {
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
     border-radius: 2px;
     animation: slideIn 0.3s ease;
 }
 
-.error-message {
+.auth-error {
+    font-size: 0.9rem;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.error-message, .auth-error {
     background-color: var(--color-error-bg);
     color: var(--color-error);
     border-left: 3px solid var(--color-error);
@@ -572,6 +590,20 @@ button:disabled {
     background-color: rgba(119, 255, 119, 0.1);
     color: var(--color-success);
     border-left: 3px solid var(--color-success);
+}
+
+.no-project-selected, .no-projects, .no-members {
+    text-align: center;
+    padding: var(--spacing-lg);
+    border: 2px solid var(--color-border);
+    background-color: var(--color-bg-card);
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin-bottom: var(--spacing-lg);
+}
+
+.no-projects, .no-members {
+    padding: var(--spacing-xl);
 }
 
 @keyframes slideIn {
@@ -585,98 +617,16 @@ button:disabled {
     }
 }
 
-.no-projects, .no-members {
-    text-align: center;
-    color: var(--color-text-muted);
-    padding: var(--spacing-xl);
-    font-style: italic;
-}
-
-.log-viewer {
-    max-height: 300px;
-    overflow-y: auto;
-    margin-top: var(--spacing-md);
-    padding: var(--spacing-md);
-    background-color: var(--color-bg-card);
-    border: 1px solid var(--color-border);
-    font-size: 0.9rem;
-}
-
-input[type="file"]::-webkit-file-upload-button {
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    color: var(--color-text-primary);
-    font-family: var(--font-family-main);
-    font-size: 0.9rem;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    margin-right: var(--spacing-sm);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    text-transform: lowercase;
-    letter-spacing: 0.08em;
-}
-
-input[type="file"]::-webkit-file-upload-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--color-border-hover);
-}
-
-input[type="file"]::-webkit-file-upload-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-input[type="file"]::file-selector-button {
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    color: var(--color-text-primary);
-    font-family: var(--font-family-main);
-    font-size: 0.9rem;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    margin-right: var(--spacing-sm);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    text-transform: lowercase;
-    letter-spacing: 0.08em;
-}
-
-input[type="file"]::file-selector-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--color-border-hover);
-}
-
-input[type="file"]::file-selector-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.project-metadata {
+.member-form {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 10px;
-    font-size: 0.85rem;
+    flex-direction: column;
+    gap: var(--spacing-md);
 }
 
-.project-owner {
-    color: var(--color-text-secondary);
+.submit-button {
+    align-self: center;
+    text-align: center;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    margin-top: 30px;
 }
 
-.owner-item {
-    background-color: rgba(90, 90, 138, 0.1);
-    border-left: 3px solid var(--color-border-focus);
-}
-
-.owner-badge {
-    background-color: var(--color-border-focus);
-    color: var(--color-text-primary);
-    padding: 2px 8px;
-    border-radius: 2px;
-    font-size: 0.8rem;
-}
-
-.project-owner-info {
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-    margin-top: 5px;
-}

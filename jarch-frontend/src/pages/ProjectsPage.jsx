@@ -14,7 +14,12 @@ const ProjectsPage = () => {
     const [projectsWithConfigs, setProjectsWithConfigs] = useState({});
     const [loading, setLoading] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
-    const [activeSection, setActiveSection] = useState('projects');
+    
+    const [activeSection, setActiveSection] = useState(() => {
+        const savedSection = localStorage.getItem('projectsPageActiveSection');
+        return savedSection || 'projects';
+    });
+    
     const [projectSaves, setProjectSaves] = useState([]);
     const [members, setMembers] = useState([]);
     
@@ -23,9 +28,42 @@ const ProjectsPage = () => {
     const [appConfigValid, setAppConfigValid] = useState(false);
     const [entityConfigValid, setEntityConfigValid] = useState(false);
 
+    const [selectedProjectId, setSelectedProjectId] = useState(() => {
+        const savedProjectId = localStorage.getItem('projectsPageSelectedProjectId');
+        return savedProjectId ? parseInt(savedProjectId) : null;
+    });
+
     useEffect(() => {
         loadAllProjects();
     }, []);
+    
+    useEffect(() => {
+        if (selectedProject) {
+            setSelectedProjectId(selectedProject.id);
+        }
+    }, [selectedProject]);
+
+    useEffect(() => {
+        if ((ownedProjects.length > 0 || joinedProjects.length > 0) && selectedProjectId) {
+            const allProjects = [...ownedProjects, ...joinedProjects];
+            const projectToSelect = allProjects.find(project => project.id === selectedProjectId);
+            if (projectToSelect) {
+                setSelectedProject(projectToSelect);
+            }
+        }
+    }, [ownedProjects, joinedProjects, selectedProjectId]);
+
+    useEffect(() => {
+        localStorage.setItem('projectsPageActiveSection', activeSection);
+    }, [activeSection]);
+
+    useEffect(() => {
+        if (selectedProjectId) {
+            localStorage.setItem('projectsPageSelectedProjectId', selectedProjectId.toString());
+        } else {
+            localStorage.removeItem('projectsPageSelectedProjectId');
+        }
+    }, [selectedProjectId]);
     
     useEffect(() => {
         if (selectedProject && activeSection === 'team') {
@@ -134,7 +172,10 @@ const ProjectsPage = () => {
                         joinedProjects={joinedProjects}
                         projectsWithConfigs={projectsWithConfigs}
                         selectedProject={selectedProject}
-                        onProjectSelect={setSelectedProject}
+                        onProjectSelect={(project) => {
+                            setSelectedProject(project);
+                            setSelectedProjectId(project?.id || null);
+                        }}
                     />
                 </div>
             )}

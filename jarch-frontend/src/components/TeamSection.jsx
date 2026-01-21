@@ -93,7 +93,6 @@ const TeamSection = ({
         <div className="team-content">
             <div className="selected-project-info">
                 <h3>Команда проекта: <span className="project-name">{selectedProject.name}</span></h3>
-                <p className="project-owner-info">Владелец: <strong>{selectedProject.owner}</strong></p>
                 {isOwner && <p style={{color: 'var(--color-success)', fontSize: '0.8rem'}}>Вы являетесь владельцем этого проекта</p>}
             </div>
             
